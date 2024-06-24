@@ -1,2 +1,4 @@
 # pinner-report
-backend API of the Pinner Report web application
+Pinner Report is a location-based issue reporting web application. backend  
+of the application is developed using FastAPI in Python and the frontend  
+using SolidJS.
