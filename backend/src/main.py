@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import sys
 
 # add 'database' folder to the system path
-sys.path.insert(0, "./database")
+sys.path.insert(0, "database")
 import connect
 
 app = FastAPI()
