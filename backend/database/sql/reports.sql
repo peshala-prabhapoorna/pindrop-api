@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS reports (
-    report_id INTEGER PRIMARY KEY,
-    title VARCHAR(128)
+CREATE TABLE reports (
+    id INTEGER PRIMARY KEY,
+    title VARCHAR(128) NOT NULL
 );
