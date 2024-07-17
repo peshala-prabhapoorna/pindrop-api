@@ -8,4 +8,4 @@ class Report(BaseModel):
     directions: str
     description: str
     up_votes: int
-    down_votes:int
+    down_votes: int
