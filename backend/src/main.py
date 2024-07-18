@@ -22,14 +22,14 @@ async def root():
 @app.post("/api/v0/post/")
 async def create_post(report: Report):
     sql = (
-        "INSERT INTO reports(date_time, title, location, directions, "
+        "INSERT INTO reports(timestamp, title, location, directions, "
         "description, up_votes, down_votes)"
         "VALUES(%s, %s, %s, %s, %s, %s, %s)"
         "RETURNING *;"
     )
 
     values = (
-        report.date_time,
+        report.timestamp,
         report.title,
         report.location,
         report.directions,

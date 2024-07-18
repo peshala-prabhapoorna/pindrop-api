@@ -2,7 +2,7 @@ from pydantic import BaseModel
 
 
 class Report(BaseModel):
-    date_time: str
+    timestamp: str
     title: str
     location: str
     directions: str

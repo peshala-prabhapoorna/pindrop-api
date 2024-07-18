@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS reports (
     id SERIAL PRIMARY KEY,
-    date_time TIMESTAMP NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
     title VARCHAR(128) NOT NULL,
     location POINT NOT NULL,
     directions VARCHAR(512) NOT NULL,
