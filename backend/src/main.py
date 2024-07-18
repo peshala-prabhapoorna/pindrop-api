@@ -42,4 +42,13 @@ async def create_post(report: Report):
     entry = db_cursor.fetchone()
     db_connection.commit()
 
-    return entry
+    return {
+        "id": entry[0],
+        "timestamp": entry[1],
+        "title": entry[2],
+        "location": entry[3],
+        "directions": entry[4],
+        "description": entry[5],
+        "up_votes": entry[6],
+        "down_votes": entry[7],
+    }
