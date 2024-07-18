@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, "database")
 import connect
 
-from utilities import Report
+from utilities import Report, reports_to_dict 
 
 app = FastAPI()
 
@@ -20,7 +20,7 @@ async def root():
 
 
 @app.post("/api/v0/post/")
-async def create_post(report: Report):
+async def create_report(report: Report):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
         "description, up_votes, down_votes)"
@@ -52,3 +52,11 @@ async def create_post(report: Report):
         "up_votes": entry[6],
         "down_votes": entry[7],
     }
+
+
+@app.get("/api/v0/reports/")
+async def get_all_posts():
+    db_cursor.execute("SELECT * FROM reports;")
+    rows = db_cursor.fetchall()
+
+    return reports_to_dict(rows)
