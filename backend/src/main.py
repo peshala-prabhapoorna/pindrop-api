@@ -60,3 +60,21 @@ async def get_all_posts():
     rows = db_cursor.fetchall()
 
     return reports_to_dict(rows)
+
+
+@app.get("/api/v0/reports/{report_id}")
+async def get_one_post(report_id):
+    sql = "SELECT * FROM reports WHERE id = %s"
+    db_cursor.execute(sql, (report_id,))
+    row = db_cursor.fetchone()
+
+    return {
+        "id": row[0],
+        "timestamp": row[1],
+        "title": row[2],
+        "location": row[3],
+        "directions": row[4],
+        "description": row[5],
+        "up_votes": row[6],
+        "down_votes": row[7],
+    }
