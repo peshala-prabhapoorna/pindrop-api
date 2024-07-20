@@ -5,7 +5,7 @@ import sys
 sys.path.insert(0, "database")
 import connect
 
-from utilities import Report, reports_to_dict 
+from utilities import Report, rows_to_reports
 
 app = FastAPI()
 
@@ -42,16 +42,18 @@ async def create_report(report: Report):
     entry = db_cursor.fetchone()
     db_connection.commit()
 
-    return {
-        "id": entry[0],
-        "timestamp": entry[1],
-        "title": entry[2],
-        "location": entry[3],
-        "directions": entry[4],
-        "description": entry[5],
-        "up_votes": entry[6],
-        "down_votes": entry[7],
-    }
+    new_report = Report(
+        id=entry[0],
+        timestamp=entry[1],
+        title=entry[2],
+        location=entry[3],
+        directions=entry[4],
+        description=entry[5],
+        up_votes=entry[6],
+        down_votes=entry[7],
+    )
+
+    return new_report
 
 
 @app.get("/api/v0/reports/")
@@ -59,7 +61,7 @@ async def get_all_posts():
     db_cursor.execute("SELECT * FROM reports;")
     rows = db_cursor.fetchall()
 
-    return reports_to_dict(rows)
+    return rows_to_reports(rows)
 
 
 @app.get("/api/v0/reports/{report_id}")
@@ -68,13 +70,15 @@ async def get_one_post(report_id):
     db_cursor.execute(sql, (report_id,))
     row = db_cursor.fetchone()
 
-    return {
-        "id": row[0],
-        "timestamp": row[1],
-        "title": row[2],
-        "location": row[3],
-        "directions": row[4],
-        "description": row[5],
-        "up_votes": row[6],
-        "down_votes": row[7],
-    }
+    report = Report(
+        id=row[0],
+        timestamp=row[1],
+        title=row[2],
+        location=row[3],
+        directions=row[4],
+        description=row[5],
+        up_votes=row[6],
+        down_votes=row[7],
+    )
+
+    return report

@@ -1,8 +1,10 @@
+from datetime import datetime
 from pydantic import BaseModel
 
 
 class Report(BaseModel):
-    timestamp: str
+    id: int = None
+    timestamp: datetime
     title: str
     location: str
     directions: str
@@ -11,24 +13,23 @@ class Report(BaseModel):
     down_votes: int
 
 
-def reports_to_dict(rows):
-    dicts = []
-    for row in rows:
-        new_dict = dict(
-            zip(
-                [
-                    "id",
-                    "timestamp",
-                    "title",
-                    "location",
-                    "directions",
-                    "description",
-                    "up_votes",
-                    "down_votes"
-                ],
-                list(row)
-            )
-        ) 
-        dicts.append(new_dict)
+class Reports(BaseModel):
+    reports: list[Report]
 
-    return dicts
+
+def rows_to_reports(rows):
+    reports = []
+    for row in rows:
+        report = Report(
+            id=row[0],
+            timestamp=row[1],
+            title=row[2],
+            location=row[3],
+            directions=row[4],
+            description=row[5],
+            up_votes=row[6],
+            down_votes=row[7],
+        )
+        reports.append(report)
+
+    return Reports(reports=reports)
