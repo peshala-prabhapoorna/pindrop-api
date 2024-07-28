@@ -17,7 +17,7 @@ db_cursor = db_connection.cursor()
 
 @app.get("/api/v0/")
 async def root():
-    return {"message": "returns something"}
+    return {"message": "this is pin-drop"}
 
 
 @app.post("/api/v0/post/")
@@ -59,7 +59,7 @@ async def create_report(report: Report):
 
 @app.get("/api/v0/reports/")
 async def get_all_posts():
-    db_cursor.execute("SELECT * FROM reports;")
+    db_cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db_cursor.fetchall()
 
     return rows_to_reports(rows)
@@ -67,9 +67,12 @@ async def get_all_posts():
 
 @app.get("/api/v0/reports/{report_id}")
 async def get_one_post(report_id):
-    sql = "SELECT * FROM reports WHERE id = %s;"
+    sql = "SELECT * FROM reports WHERE id = %s AND deleted_at IS NULL;"
     db_cursor.execute(sql, (report_id,))
     row = db_cursor.fetchone()
+
+    if row is None:
+        return {"message": "report does not exist"}
 
     report = Report(
         id=row[0],
