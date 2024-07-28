@@ -1,3 +1,4 @@
+import datetime
 from fastapi import FastAPI
 import sys
 
@@ -66,7 +67,7 @@ async def get_all_posts():
 
 @app.get("/api/v0/reports/{report_id}")
 async def get_one_post(report_id):
-    sql = "SELECT * FROM reports WHERE id = %s"
+    sql = "SELECT * FROM reports WHERE id = %s;"
     db_cursor.execute(sql, (report_id,))
     row = db_cursor.fetchone()
 
@@ -82,3 +83,20 @@ async def get_one_post(report_id):
     )
 
     return report
+
+
+@app.put("/api/v0/reports/delete/{report_id}")
+async def delete_report(report_id):
+    sql1 = (
+        "UPDATE reports SET deleted_at = %s WHERE id = %s AND deleted_at "
+        "IS NULL RETURNING title, deleted_at;"
+    )
+    utc_now = datetime.datetime.now(datetime.UTC)
+    db_cursor.execute(sql1, (utc_now, report_id))
+    row = db_cursor.fetchone()
+    db_connection.commit()
+
+    if row is None:
+        return {"message": "report not deleted"}
+
+    return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}

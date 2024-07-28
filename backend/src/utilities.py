@@ -11,6 +11,7 @@ class Report(BaseModel):
     description: str
     up_votes: int
     down_votes: int
+    deleted_at: datetime = None
 
 
 class Reports(BaseModel):
