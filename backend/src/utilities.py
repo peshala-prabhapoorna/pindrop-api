@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from pydantic import BaseModel
 
 
@@ -43,3 +43,7 @@ def rows_to_reports(rows):
         reports.append(report)
 
     return ReportsOut(reports=reports)
+
+
+def utc_now():
+    return datetime.now(UTC)

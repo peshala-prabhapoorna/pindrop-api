@@ -1,4 +1,3 @@
-import datetime
 from fastapi import FastAPI
 import sys
 
@@ -6,7 +5,7 @@ import sys
 sys.path.insert(0, "database")
 import connect
 
-from utilities import Report, rows_to_reports
+from utilities import ReportIn, ReportOut, rows_to_reports, utc_now
 
 app = FastAPI()
 
@@ -21,7 +20,7 @@ async def root():
 
 
 @app.post("/api/v0/post/")
-async def create_report(report: Report):
+async def create_report(report: ReportIn):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
         "description, up_votes, down_votes)"
@@ -30,20 +29,20 @@ async def create_report(report: Report):
     )
 
     values = (
-        report.timestamp,
+        utc_now(),
         report.title,
         report.location,
         report.directions,
         report.description,
-        report.up_votes,
-        report.down_votes,
+        0,
+        0,
     )
 
     db_cursor.execute(sql, values)
     entry = db_cursor.fetchone()
     db_connection.commit()
 
-    new_report = Report(
+    new_report = ReportOut(
         id=entry[0],
         timestamp=entry[1],
         title=entry[2],
@@ -94,8 +93,7 @@ async def delete_report(report_id):
         "UPDATE reports SET deleted_at = %s WHERE id = %s AND deleted_at "
         "IS NULL RETURNING title, deleted_at;"
     )
-    utc_now = datetime.datetime.now(datetime.UTC)
-    db_cursor.execute(sql1, (utc_now, report_id))
+    db_cursor.execute(sql1, (utc_now(), report_id))
     row = db_cursor.fetchone()
     db_connection.commit()
 
