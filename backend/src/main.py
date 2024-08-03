@@ -5,7 +5,13 @@ import sys
 sys.path.insert(0, "database")
 import connect
 
-from utilities import ReportIn, ReportOut, rows_to_reports, utc_now
+from utilities import (
+    ReportIn,
+    ReportOut,
+    row_to_report,
+    rows_to_reports,
+    utc_now,
+)
 
 app = FastAPI()
 
@@ -39,19 +45,10 @@ async def create_report(report: ReportIn):
     )
 
     db_cursor.execute(sql, values)
-    entry = db_cursor.fetchone()
+    row = db_cursor.fetchone()
     db_connection.commit()
 
-    new_report = ReportOut(
-        id=entry[0],
-        timestamp=entry[1],
-        title=entry[2],
-        location=entry[3],
-        directions=entry[4],
-        description=entry[5],
-        up_votes=entry[6],
-        down_votes=entry[7],
-    )
+    new_report = row_to_report(row)
 
     return new_report
 
@@ -73,16 +70,7 @@ async def get_one_post(report_id):
     if row is None:
         return {"message": "report does not exist"}
 
-    report = Report(
-        id=row[0],
-        timestamp=row[1],
-        title=row[2],
-        location=row[3],
-        directions=row[4],
-        description=row[5],
-        up_votes=row[6],
-        down_votes=row[7],
-    )
+    report = row_to_report(row)
 
     return report
 
