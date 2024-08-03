@@ -2,26 +2,35 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Report(BaseModel):
-    id: int = None
-    timestamp: datetime
+class ReportBase(BaseModel):
     title: str
     location: str
     directions: str
     description: str
+
+
+# model to get input from the user
+class ReportIn(ReportBase):
+    pass
+
+
+# model to use in responses
+class ReportOut(ReportBase):
+    id: int
+    timestamp: datetime
     up_votes: int
     down_votes: int
-    deleted_at: datetime = None
 
 
-class Reports(BaseModel):
-    reports: list[Report]
+# mode to use in reponses that sends multiple reports
+class ReportsOut(BaseModel):
+    reports: list[ReportOut]
 
 
 def rows_to_reports(rows):
     reports = []
     for row in rows:
-        report = Report(
+        report = ReportOut(
             id=row[0],
             timestamp=row[1],
             title=row[2],
@@ -33,4 +42,4 @@ def rows_to_reports(rows):
         )
         reports.append(report)
 
-    return Reports(reports=reports)
+    return ReportsOut(reports=reports)
