@@ -7,7 +7,7 @@ import connect
 
 from utilities import (
     ReportIn,
-    ReportOut,
+    ReportEdit,
     row_to_report,
     rows_to_reports,
     utc_now,
@@ -77,11 +77,11 @@ async def get_one_post(report_id):
 
 @app.put("/api/v0/reports/delete/{report_id}")
 async def delete_report(report_id):
-    sql1 = (
+    sql = (
         "UPDATE reports SET deleted_at = %s WHERE id = %s AND deleted_at "
         "IS NULL RETURNING title, deleted_at;"
     )
-    db_cursor.execute(sql1, (utc_now(), report_id))
+    db_cursor.execute(sql, (utc_now(), report_id))
     row = db_cursor.fetchone()
     db_connection.commit()
 
@@ -89,3 +89,50 @@ async def delete_report(report_id):
         return {"message": "report not deleted"}
 
     return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
+
+
+@app.patch("/api/v0/reports/edit/{report_id}")
+async def edit_report(report_id: str, report: ReportEdit):
+    update_data = report.model_dump(exclude_unset=True)
+    if update_data is None:
+        return {"message": "no new values to update"}
+
+    select_sql = (
+        "SELECT title, location, directions, description "
+        "FROM reports "
+        "WHERE id = %s AND deleted_at IS NULL;"
+    )
+    db_cursor.execute(select_sql, (report_id,))
+    row = db_cursor.fetchone()
+
+    if row is None:
+        return {"message": "report does not exist"}
+
+    report_in_db_model = ReportEdit(
+        title = row[0],
+        location = row[1],
+        directions = row[2],
+        description = row[3]
+    )
+
+    updated_report_model = report_in_db_model.model_copy(update=update_data)
+    update_sql = (
+        "UPDATE reports "
+        "SET title = %s, location = %s, directions = %s, description = %s "
+        "WHERE id = %s "
+        "RETURNING *;"
+    )
+    update_values = (
+        updated_report_model.title,
+        updated_report_model.location,
+        updated_report_model.directions,
+        updated_report_model.description,
+        report_id
+    )
+    db_cursor.execute(update_sql, update_values)
+    updated_row = db_cursor.fetchone()
+    db_connection.commit()
+
+    report = row_to_report(updated_row)
+
+    return report

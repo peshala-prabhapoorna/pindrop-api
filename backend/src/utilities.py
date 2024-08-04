@@ -22,6 +22,13 @@ class ReportOut(ReportBase):
     down_votes: int
 
 
+class ReportEdit(ReportBase):
+    title: str | None = None
+    location: str | None = None
+    directions: str | None = None
+    description: str | None = None
+
+
 # mode to use in reponses that sends multiple reports
 class ReportsOut(BaseModel):
     reports: list[ReportOut]
