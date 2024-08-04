@@ -78,8 +78,10 @@ async def get_one_post(report_id):
 @app.put("/api/v0/reports/delete/{report_id}")
 async def delete_report(report_id):
     sql = (
-        "UPDATE reports SET deleted_at = %s WHERE id = %s AND deleted_at "
-        "IS NULL RETURNING title, deleted_at;"
+        "UPDATE reports "
+        "SET deleted_at = %s "
+        "WHERE id = %s AND deleted_at IS NULL "
+        "RETURNING title, deleted_at;"
     )
     db_cursor.execute(sql, (utc_now(), report_id))
     row = db_cursor.fetchone()
@@ -94,7 +96,7 @@ async def delete_report(report_id):
 @app.patch("/api/v0/reports/edit/{report_id}")
 async def edit_report(report_id: str, report: ReportEdit):
     update_data = report.model_dump(exclude_unset=True)
-    if update_data is None:
+    if update_data == {}:
         return {"message": "no new values to update"}
 
     select_sql = (
