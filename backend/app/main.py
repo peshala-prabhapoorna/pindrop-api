@@ -20,12 +20,12 @@ db_connection = connect.connect()
 db_cursor = db_connection.cursor()
 
 
-@app.get("/api/v0/")
+@app.get("/api/v0")
 async def root():
     return {"message": "this is pin-drop"}
 
 
-@app.post("/api/v0/post/")
+@app.post("/api/v0/reports/post")
 async def create_report(report: ReportIn):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
@@ -53,7 +53,7 @@ async def create_report(report: ReportIn):
     return new_report
 
 
-@app.get("/api/v0/reports/")
+@app.get("/api/v0/reports")
 async def get_all_posts():
     db_cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db_cursor.fetchall()
