@@ -75,7 +75,7 @@ async def get_one_post(report_id):
     return report
 
 
-@app.put("/api/v0/reports/delete/{report_id}")
+@app.patch("/api/v0/reports/delete/{report_id}")
 async def delete_report(report_id):
     sql = (
         "UPDATE reports "

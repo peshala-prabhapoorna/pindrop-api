@@ -22,6 +22,7 @@ class ReportOut(ReportBase):
     down_votes: int
 
 
+# model to get input for report updates/edits
 class ReportEdit(ReportBase):
     title: str | None = None
     location: str | None = None
