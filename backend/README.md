@@ -16,6 +16,6 @@ pip3 install -r requirements.txt
 
 4. run the backend application using fastapi cli
 ```bash
-fastapi dev src/main.py
+fastapi dev app/main.py
 ```
 happy coding!
