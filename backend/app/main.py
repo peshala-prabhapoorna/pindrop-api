@@ -25,7 +25,7 @@ async def root():
     return {"message": "this is pin-drop"}
 
 
-@app.post("/api/v0/reports/post")
+@app.post("/api/v0/reports")
 async def create_report(report: ReportIn):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
@@ -54,7 +54,7 @@ async def create_report(report: ReportIn):
 
 
 @app.get("/api/v0/reports")
-async def get_all_posts():
+async def get_all_reports():
     db_cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db_cursor.fetchall()
 
@@ -62,7 +62,7 @@ async def get_all_posts():
 
 
 @app.get("/api/v0/reports/{report_id}")
-async def get_one_post(report_id):
+async def get_one_report(report_id):
     sql = "SELECT * FROM reports WHERE id = %s AND deleted_at IS NULL;"
     db_cursor.execute(sql, (report_id,))
     row = db_cursor.fetchone()
@@ -75,7 +75,7 @@ async def get_one_post(report_id):
     return report
 
 
-@app.patch("/api/v0/reports/delete/{report_id}")
+@app.delete("/api/v0/reports/{report_id}")
 async def delete_report(report_id):
     sql = (
         "UPDATE reports "
@@ -93,7 +93,7 @@ async def delete_report(report_id):
     return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
 
 
-@app.patch("/api/v0/reports/edit/{report_id}")
+@app.patch("/api/v0/reports/{report_id}")
 async def edit_report(report_id: str, report: ReportEdit):
     update_data = report.model_dump(exclude_unset=True)
     if update_data == {}:
