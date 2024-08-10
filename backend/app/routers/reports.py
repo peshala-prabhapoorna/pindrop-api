@@ -1,10 +1,6 @@
 from fastapi import APIRouter
-import sys
 
-# add 'database' folder to the system path
-sys.path.insert(0, "database")
-import connect
-
+from app.dependencies import db_connection, db_cursor
 from app.utilities import (
     ReportIn,
     ReportEdit,
@@ -12,11 +8,6 @@ from app.utilities import (
     rows_to_reports,
     utc_now,
 )
-
-
-# connect to PostgreSQL server
-db_connection = connect.connect()
-db_cursor = db_connection.cursor()
 
 
 router = APIRouter()
@@ -108,10 +99,7 @@ async def edit_report(report_id: str, report: ReportEdit):
         return {"message": "report does not exist"}
 
     report_in_db_model = ReportEdit(
-        title = row[0],
-        location = row[1],
-        directions = row[2],
-        description = row[3]
+        title=row[0], location=row[1], directions=row[2], description=row[3]
     )
 
     updated_report_model = report_in_db_model.model_copy(update=update_data)
@@ -126,7 +114,7 @@ async def edit_report(report_id: str, report: ReportEdit):
         updated_report_model.location,
         updated_report_model.directions,
         updated_report_model.description,
-        report_id
+        report_id,
     )
     db_cursor.execute(update_sql, update_values)
     updated_row = db_cursor.fetchone()
