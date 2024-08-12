@@ -1,13 +1,9 @@
 from fastapi import APIRouter
 
-from app.dependencies import db_connection, db_cursor
-from app.utilities import (
-    ReportIn,
-    ReportEdit,
-    row_to_report,
-    rows_to_reports,
-    utc_now,
-)
+from src.database import db_connection, db_cursor
+from src.utils import utc_now
+from .models import ReportIn, ReportEdit
+from .utils import row_to_report, rows_to_reports
 
 
 router = APIRouter()

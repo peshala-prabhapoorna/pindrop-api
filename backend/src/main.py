@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from app.routers import reports
+from src.reports import router as reports
 
 app = FastAPI()
 
