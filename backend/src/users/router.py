@@ -1,9 +1,10 @@
 import bcrypt
 from fastapi import APIRouter
 
-from .schemas import UserIn
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
+from .schemas import UserIn
+from .utils import row_to_user_out
 
 router = APIRouter()
 
@@ -35,4 +36,4 @@ async def create_user(user: UserIn):
     row = db_cursor.fetchone()
     db_connection.commit()
 
-    return row
+    return await row_to_user_out(row)

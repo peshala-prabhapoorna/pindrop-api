@@ -11,3 +11,8 @@ class UserBase(BaseModel):
 # model to create a user
 class UserIn(UserBase):
     password : str
+
+
+# model to use in responses
+class UserOut(UserBase):
+    id : int
