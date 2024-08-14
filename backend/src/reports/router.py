@@ -2,7 +2,7 @@ from fastapi import APIRouter
 
 from src.database import db_connection, db_cursor
 from src.utils import utc_now
-from .models import ReportIn, ReportEdit
+from .schemas import ReportIn, ReportEdit
 from .utils import row_to_report, rows_to_reports
 
 

@@ -1,4 +1,4 @@
-from .models import ReportOut, ReportsOut
+from .schemas import ReportOut, ReportsOut
 
 
 def row_to_report(row):
