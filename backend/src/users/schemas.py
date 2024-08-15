@@ -2,17 +2,17 @@ from pydantic import BaseModel
 
 
 class UserBase(BaseModel):
-    first_name : str
-    last_name : str
-    phone_num : str
-    email : str
+    first_name: str
+    last_name: str
+    phone_num: str
+    email: str
 
 
 # model to create a user
 class UserIn(UserBase):
-    password : str
+    password: str
 
 
 # model to use in responses
 class UserOut(UserBase):
-    id : int
+    id: int
