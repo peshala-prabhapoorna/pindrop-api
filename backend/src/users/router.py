@@ -45,7 +45,7 @@ async def get_user(user_id: str):
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
         "FROM users "
-        "WHERE id = %s;"
+        "WHERE id = %s AND deleted_at IS NULL;"
     )
     values = (user_id,)
 
