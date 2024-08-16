@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
-from .schemas import UserIn
+from .schemas import UserIn, UserNameEdit
 from .utils import row_to_user_out
 
 router = APIRouter()
@@ -54,5 +54,43 @@ async def get_user(user_id: str):
 
     if row is None:
         return {"message": "user does not exist"}
+
+    return await row_to_user_out(row)
+
+
+@router.patch("/api/v0/users/{user_id}")
+async def edit_user_name(user_id: str, user_names: UserNameEdit):
+    update_data = user_names.model_dump(exclude_unset=True)
+    if update_data == {}:
+        return {"message": "no new values to update"}
+
+    select_sql = (
+        "SELECT first_name, last_name "
+        "FROM users "
+        "WHERE id = %s AND deleted_at IS NULL;"
+    )
+    db_cursor.execute(select_sql, (user_id,))
+    row = db_cursor.fetchone()
+
+    if row is None:
+        return {"message": "user does not exist"}
+
+    name_model = UserNameEdit(first_name=row[0], last_name=row[1])
+    updated_name_model = name_model.model_copy(update=update_data)
+
+    update_sql = (
+        "UPDATE users "
+        "SET first_name = %s, last_name = %s "
+        "WHERE id = %s AND deleted_at IS NULL "
+        "RETURNING id, first_name, last_name, phone_num, email;"
+    )
+    update_values = (
+        updated_name_model.first_name,
+        updated_name_model.last_name,
+        user_id,
+    )
+    db_cursor.execute(update_sql, update_values)
+    row = db_cursor.fetchone()
+    db_connection.commit()
 
     return await row_to_user_out(row)

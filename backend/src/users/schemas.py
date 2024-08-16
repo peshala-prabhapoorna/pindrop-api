@@ -16,3 +16,8 @@ class UserIn(UserBase):
 # model to use in responses
 class UserOut(UserBase):
     id: int
+
+
+class UserNameEdit(BaseModel):
+    first_name: str | None = None
+    last_name: str | None = None
