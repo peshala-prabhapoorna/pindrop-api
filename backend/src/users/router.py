@@ -94,3 +94,33 @@ async def edit_user_name(user_id: str, user_names: UserNameEdit):
     db_connection.commit()
 
     return await row_to_user_out(row)
+
+
+@router.delete("/api/v0/users/{user_id}")
+async def delete_user(user_id: str):
+    sql = (
+        "UPDATE users "
+        "SET deleted_at = %s "
+        "WHERE id = %s AND deleted_at IS NULL "
+        "RETURNING first_name, last_name, deleted_at;"
+    )
+    values = (
+        utc_now(),
+        user_id,
+    )
+
+    db_cursor.execute(sql, values)
+    row = db_cursor.fetchone()
+    db_connection.commit()
+
+    if row is None:
+        return {"message": "user does not exist"}
+
+    response = {
+        "message": "user deleted",
+        "first_name": row[0],
+        "last_name": row[1],
+        "deleted_at": row[2],
+    }
+
+    return response
