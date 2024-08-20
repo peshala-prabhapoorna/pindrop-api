@@ -3,7 +3,7 @@ from fastapi import APIRouter
 
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
-from .schemas import UserIn, UserNameEdit
+from .schemas import UserIn, UserNameEdit, UserLogin
 from .utils import row_to_user_out
 
 router = APIRouter()
@@ -124,3 +124,30 @@ async def delete_user(user_id: str):
     }
 
     return response
+
+
+@router.post("/api/v0/users/login")
+async def login(user_login: UserLogin):
+    sql = (
+        "SELECT id, first_name, last_name, email, phone_num, hashed_password "
+        "FROM users "
+        "WHERE email = %s AND deleted_at IS NULL;"
+    )
+    values = (user_login.email,)
+    db_cursor.execute(sql, values)
+    row = db_cursor.fetchone()
+
+    if row is None:
+        return {"message": "invalid email address"}
+
+    login_password_bytes = user_login.password.encode("utf-8")
+    salt = bcrypt.gensalt()
+    hashed_login_password = bcrypt.hashpw(login_password_bytes, salt)
+
+    hashed_password = row[5].encode("utf-8")
+    result = bcrypt.checkpw(hashed_login_password, hashed_password)
+
+    if not result:
+        return {"message": "incorrect password"}
+
+    return row_to_user_out(row[:5])
