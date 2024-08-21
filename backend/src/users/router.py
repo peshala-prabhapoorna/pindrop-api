@@ -30,7 +30,7 @@ async def create_user(user: UserIn):
         user.last_name,
         user.phone_num,
         user.email,
-        hashed_password,
+        hashed_password.decode("utf-8"),
     )
 
     db_cursor.execute(sql, values)
@@ -141,13 +141,10 @@ async def login(user_login: UserLogin):
         return {"message": "invalid email address"}
 
     login_password_bytes = user_login.password.encode("utf-8")
-    salt = bcrypt.gensalt()
-    hashed_login_password = bcrypt.hashpw(login_password_bytes, salt)
-
     hashed_password = row[5].encode("utf-8")
-    result = bcrypt.checkpw(hashed_login_password, hashed_password)
+    result = bcrypt.checkpw(login_password_bytes, hashed_password)
 
     if not result:
         return {"message": "incorrect password"}
 
-    return row_to_user_out(row[:5])
+    return await row_to_user_out(row[:5])
