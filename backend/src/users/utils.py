@@ -1,4 +1,11 @@
+from os import getenv
+
 from .schemas import UserOut
+
+
+JWT_SECRET = getenv("JWT_SECRET")
+JWT_ALGORITHM = getenv("JWT_ALGORITHM")
+JWT_TOKEN_EXPIRE_MINS = getenv("JWT_TOKEN_EXPIRE_MINS")
 
 
 async def row_to_user_out(row):

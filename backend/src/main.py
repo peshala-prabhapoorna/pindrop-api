@@ -1,7 +1,10 @@
+from dotenv import load_dotenv
 from fastapi import FastAPI
 
 from src.reports import router as reports
 from src.users import router as users
+
+load_dotenv()
 
 app = FastAPI()
 
