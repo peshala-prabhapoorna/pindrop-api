@@ -1,10 +1,13 @@
+from typing import Annotated
+
 import bcrypt
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
-from .schemas import UserIn, UserNameEdit, UserLogin
-from .utils import row_to_user_out
+from .schemas import UserIn, UserNameEdit, Token
+from .utils import row_to_user_out, authenticate_user, create_access_token
 
 router = APIRouter()
 
@@ -37,7 +40,7 @@ async def create_user(user: UserIn):
     row = db_cursor.fetchone()
     db_connection.commit()
 
-    return await row_to_user_out(row)
+    return row_to_user_out(row)
 
 
 @router.get("/api/v0/users/{user_id}")
@@ -55,7 +58,7 @@ async def get_user(user_id: str):
     if row is None:
         return {"message": "user does not exist"}
 
-    return await row_to_user_out(row)
+    return row_to_user_out(row)
 
 
 @router.patch("/api/v0/users/{user_id}")
@@ -93,7 +96,7 @@ async def edit_user_name(user_id: str, user_names: UserNameEdit):
     row = db_cursor.fetchone()
     db_connection.commit()
 
-    return await row_to_user_out(row)
+    return row_to_user_out(row)
 
 
 @router.delete("/api/v0/users/{user_id}")
@@ -126,25 +129,26 @@ async def delete_user(user_id: str):
     return response
 
 
-@router.post("/api/v0/users/login")
-async def login(user_login: UserLogin):
+@router.post("/api/v0/users/token")
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+) -> Token:
+    user = authenticate_user(db_cursor, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(data={"sub": user.email})
+
     sql = (
-        "SELECT id, first_name, last_name, email, phone_num, hashed_password "
-        "FROM users "
-        "WHERE email = %s AND deleted_at IS NULL;"
+        "UPDATE users "
+        "SET token = %s "
+        "WHERE id = %s AND deleted_at IS NULL;"
     )
-    values = (user_login.email,)
+    values = (access_token, user.id)
     db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
+    db_connection.commit()
 
-    if row is None:
-        return {"message": "invalid email address"}
-
-    login_password_bytes = user_login.password.encode("utf-8")
-    hashed_password = row[5].encode("utf-8")
-    result = bcrypt.checkpw(login_password_bytes, hashed_password)
-
-    if not result:
-        return {"message": "incorrect password"}
-
-    return await row_to_user_out(row[:5])
+    return Token(access_token=access_token, token_type="bearer")
