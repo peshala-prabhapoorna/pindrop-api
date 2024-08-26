@@ -1,15 +1,9 @@
 import bcrypt
-import jwt
-from os import getenv
 from datetime import timedelta
+import jwt
 
 from src.utils import utc_now
 from .schemas import UserOut
-
-
-JWT_SECRET = getenv("JWT_SECRET")
-JWT_ALGORITHM = getenv("JWT_ALGORITHM")
-JWT_TOKEN_EXPIRE_MINS = getenv("JWT_TOKEN_EXPIRE_MINS")
 
 
 def row_to_user_out(row):
@@ -24,13 +18,29 @@ def row_to_user_out(row):
     return user_out
 
 
-def authenticate_user(db_cursor, username: str, password: str):
+def get_user(db_cursor, email: str):
     sql = (
-        "SELECT id, first_name, last_name, email, phone_num, hashed_password "
+        "SELECT id, first_name, last_name, phone_num, email "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
-    values = (username,)
+    values = (email,)
+    db_cursor.execute(sql, values)
+    row = db_cursor.fetchone()
+
+    if row is None:
+        return None
+
+    return row_to_user_out(row)
+
+
+def authenticate_user(db_cursor, email: str, password: str):
+    sql = (
+        "SELECT id, first_name, last_name, phone_num, email, hashed_password "
+        "FROM users "
+        "WHERE email = %s AND deleted_at IS NULL;"
+    )
+    values = (email,)
     db_cursor.execute(sql, values)
     row = db_cursor.fetchone()
 
@@ -47,10 +57,14 @@ def authenticate_user(db_cursor, username: str, password: str):
     return row_to_user_out(row[:5])
 
 
-def create_access_token(data: dict):
+def create_access_token(data: dict, jwt_args: dict):
     to_encode = data.copy()
-    expire = utc_now() + timedelta(minutes=int(JWT_TOKEN_EXPIRE_MINS))
+    expire = utc_now() + timedelta(minutes=int(jwt_args["timedelta"]))
     to_encode.update({"exp": expire})
 
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        jwt_args["secret"],
+        algorithm=jwt_args["algorithm"]
+    )
     return encoded_jwt

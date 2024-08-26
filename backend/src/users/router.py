@@ -6,7 +6,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
-from .schemas import UserIn, UserNameEdit, Token
+from .dependencies import get_current_active_user, get_jwt_env_vars
+from .schemas import UserIn, UserNameEdit, UserOut, Token
 from .utils import row_to_user_out, authenticate_user, create_access_token
 
 router = APIRouter()
@@ -44,7 +45,10 @@ async def create_user(user: UserIn):
 
 
 @router.get("/api/v0/users/{user_id}")
-async def get_user(user_id: str):
+async def get_user(
+    user_id: str,
+    current_user: Annotated[UserOut, Depends(get_current_active_user)]
+):
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
         "FROM users "
@@ -131,7 +135,8 @@ async def delete_user(user_id: str):
 
 @router.post("/api/v0/users/token")
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    jwt_env: Annotated[dict, Depends(get_jwt_env_vars)]
 ) -> Token:
     user = authenticate_user(db_cursor, form_data.username, form_data.password)
     if not user:
@@ -140,7 +145,10 @@ async def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = create_access_token(data={"sub": user.email})
+    access_token = create_access_token(
+        data={"sub": user.email},
+        jwt_args=jwt_env
+    )
 
     sql = (
         "UPDATE users "
