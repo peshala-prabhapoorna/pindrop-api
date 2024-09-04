@@ -15,7 +15,6 @@ def row_to_user_in_db(row) -> UserInDB:
         email=row[4],
         token=row[5],
     )
-
     return user
 
 
@@ -27,7 +26,6 @@ def row_to_user_out(row) -> UserOut:
         phone_num=row[3],
         email=row[4],
     )
-
     return user_out
 
 

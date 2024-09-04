@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
 from .dependencies import get_current_active_user, get_jwt_env_vars
-from .schemas import UserIn, UserNameEdit, UserOut, Token
+from .schemas import UserIn, UserInDB, UserNameEdit, Token
 from .utils import row_to_user_out, authenticate_user, create_access_token
 
 router = APIRouter()
@@ -44,10 +44,53 @@ async def create_user(user: UserIn):
     return row_to_user_out(row)
 
 
+@router.post("/api/v0/users/token")
+async def login(
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
+) -> Token:
+    user = authenticate_user(db_cursor, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = create_access_token(
+        data={"sub": user.email}, jwt_args=jwt_env
+    )
+
+    sql = (
+        "UPDATE users "
+        "SET token = %s "
+        "WHERE id = %s AND deleted_at IS NULL;"
+    )
+    values = (access_token, user.id)
+    db_cursor.execute(sql, values)
+    db_connection.commit()
+
+    return Token(access_token=access_token, token_type="bearer")
+
+
+@router.delete("/api/v0/users/token")
+async def logout(
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+):
+    sql = (
+        "UPDATE users "
+        "SET token = NULL "
+        "WHERE id = %s AND deleted_at IS NULL;"
+    )
+    values = (current_user.id,)
+    db_cursor.execute(sql, values)
+    db_connection.commit()
+    return {"detail": "Session terminated"}
+
+
 @router.get("/api/v0/users/{user_id}")
 async def get_user(
     user_id: str,
-    current_user: Annotated[UserOut, Depends(get_current_active_user)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
@@ -131,31 +174,3 @@ async def delete_user(user_id: str):
     }
 
     return response
-
-
-@router.post("/api/v0/users/token")
-async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
-) -> Token:
-    user = authenticate_user(db_cursor, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = create_access_token(
-        data={"sub": user.email}, jwt_args=jwt_env
-    )
-
-    sql = (
-        "UPDATE users "
-        "SET token = %s "
-        "WHERE id = %s AND deleted_at IS NULL;"
-    )
-    values = (access_token, user.id)
-    db_cursor.execute(sql, values)
-    db_connection.commit()
-
-    return Token(access_token=access_token, token_type="bearer")

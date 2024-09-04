@@ -10,7 +10,7 @@ class UserBase(BaseModel):
 
 class UserInDB(UserBase):
     id: int
-    token: str
+    token: str | None
 
 
 # model to create a user
