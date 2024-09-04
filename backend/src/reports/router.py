@@ -6,10 +6,10 @@ from .schemas import ReportIn, ReportEdit
 from .utils import row_to_report, rows_to_reports
 
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
 
 
-@router.post("/api/v0/reports")
+@router.post("")
 async def create_report(report: ReportIn):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
@@ -37,7 +37,7 @@ async def create_report(report: ReportIn):
     return new_report
 
 
-@router.get("/api/v0/reports")
+@router.get("")
 async def get_all_reports():
     db_cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db_cursor.fetchall()
@@ -45,7 +45,7 @@ async def get_all_reports():
     return rows_to_reports(rows)
 
 
-@router.get("/api/v0/reports/{report_id}")
+@router.get("/{report_id}")
 async def get_one_report(report_id):
     sql = "SELECT * FROM reports WHERE id = %s AND deleted_at IS NULL;"
     db_cursor.execute(sql, (report_id,))
@@ -59,7 +59,7 @@ async def get_one_report(report_id):
     return report
 
 
-@router.delete("/api/v0/reports/{report_id}")
+@router.delete("/{report_id}")
 async def delete_report(report_id):
     sql = (
         "UPDATE reports "
@@ -77,7 +77,7 @@ async def delete_report(report_id):
     return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
 
 
-@router.patch("/api/v0/reports/{report_id}")
+@router.patch("/{report_id}")
 async def edit_report(report_id: str, report: ReportEdit):
     update_data = report.model_dump(exclude_unset=True)
     if update_data == {}:

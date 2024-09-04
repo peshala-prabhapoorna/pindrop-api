@@ -10,10 +10,10 @@ from .dependencies import get_current_active_user, get_jwt_env_vars
 from .schemas import UserIn, UserInDB, UserNameEdit, Token
 from .utils import row_to_user_out, authenticate_user, create_access_token
 
-router = APIRouter()
+router = APIRouter(prefix="/api/v0/users", tags=["users"])
 
 
-@router.post("/api/v0/users")
+@router.post("")
 async def create_user(user: UserIn):
     sql = (
         "INSERT INTO users (created_at, first_name, last_name, phone_num, "
@@ -44,7 +44,7 @@ async def create_user(user: UserIn):
     return row_to_user_out(row)
 
 
-@router.post("/api/v0/users/token")
+@router.post("/token")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
@@ -72,7 +72,7 @@ async def login(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.delete("/api/v0/users/token")
+@router.delete("/token")
 async def logout(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)]
 ):
@@ -87,7 +87,7 @@ async def logout(
     return {"detail": "Session terminated"}
 
 
-@router.get("/api/v0/users/{user_id}")
+@router.get("/{user_id}")
 async def get_user(
     user_id: str,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
@@ -108,7 +108,7 @@ async def get_user(
     return row_to_user_out(row)
 
 
-@router.patch("/api/v0/users/{user_id}")
+@router.patch("/{user_id}")
 async def edit_user_name(user_id: str, user_names: UserNameEdit):
     update_data = user_names.model_dump(exclude_unset=True)
     if update_data == {}:
@@ -146,7 +146,7 @@ async def edit_user_name(user_id: str, user_names: UserNameEdit):
     return row_to_user_out(row)
 
 
-@router.delete("/api/v0/users/{user_id}")
+@router.delete("/{user_id}")
 async def delete_user(user_id: str):
     sql = (
         "UPDATE users "
