@@ -47,7 +47,7 @@ async def create_user(user: UserIn):
 @router.get("/api/v0/users/{user_id}")
 async def get_user(
     user_id: str,
-    current_user: Annotated[UserOut, Depends(get_current_active_user)]
+    current_user: Annotated[UserOut, Depends(get_current_active_user)],
 ):
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
@@ -136,7 +136,7 @@ async def delete_user(user_id: str):
 @router.post("/api/v0/users/token")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    jwt_env: Annotated[dict, Depends(get_jwt_env_vars)]
+    jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
 ) -> Token:
     user = authenticate_user(db_cursor, form_data.username, form_data.password)
     if not user:
@@ -146,8 +146,7 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(
-        data={"sub": user.email},
-        jwt_args=jwt_env
+        data={"sub": user.email}, jwt_args=jwt_env
     )
 
     sql = (

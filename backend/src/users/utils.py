@@ -3,10 +3,23 @@ from datetime import timedelta
 import jwt
 
 from src.utils import utc_now
-from .schemas import UserOut
+from .schemas import UserInDB, UserOut
 
 
-def row_to_user_out(row):
+def row_to_user_in_db(row) -> UserInDB:
+    user = UserInDB(
+        id=row[0],
+        first_name=row[1],
+        last_name=row[2],
+        phone_num=row[3],
+        email=row[4],
+        token=row[5],
+    )
+
+    return user
+
+
+def row_to_user_out(row) -> UserOut:
     user_out = UserOut(
         id=row[0],
         first_name=row[1],
@@ -18,9 +31,9 @@ def row_to_user_out(row):
     return user_out
 
 
-def get_user(db_cursor, email: str):
+def get_user(db_cursor, email: str) -> UserInDB:
     sql = (
-        "SELECT id, first_name, last_name, phone_num, email "
+        "SELECT id, first_name, last_name, phone_num, email, token "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
@@ -31,7 +44,7 @@ def get_user(db_cursor, email: str):
     if row is None:
         return None
 
-    return row_to_user_out(row)
+    return row_to_user_in_db(row)
 
 
 def authenticate_user(db_cursor, email: str, password: str):
@@ -63,8 +76,6 @@ def create_access_token(data: dict, jwt_args: dict):
     to_encode.update({"exp": expire})
 
     encoded_jwt = jwt.encode(
-        to_encode,
-        jwt_args["secret"],
-        algorithm=jwt_args["algorithm"]
+        to_encode, jwt_args["secret"], algorithm=jwt_args["algorithm"]
     )
     return encoded_jwt

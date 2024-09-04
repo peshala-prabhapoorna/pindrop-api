@@ -8,6 +8,11 @@ class UserBase(BaseModel):
     email: str
 
 
+class UserInDB(UserBase):
+    id: int
+    token: str
+
+
 # model to create a user
 class UserIn(UserBase):
     password: str
