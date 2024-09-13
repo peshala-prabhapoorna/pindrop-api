@@ -45,9 +45,10 @@ def get_user(db_cursor, email: str) -> UserInDB:
     return row_to_user_in_db(row)
 
 
-def authenticate_user(db_cursor, email: str, password: str):
+def authenticate_user(db_cursor, email: str, password: str) -> UserInDB:
     sql = (
-        "SELECT id, first_name, last_name, phone_num, email, hashed_password "
+        "SELECT "
+        "id, first_name, last_name, phone_num, email, token, hashed_password "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
@@ -59,13 +60,13 @@ def authenticate_user(db_cursor, email: str, password: str):
         return False
 
     login_password_bytes = password.encode("utf-8")
-    hashed_password = row[5].encode("utf-8")
+    hashed_password = row[6].encode("utf-8")
     result = bcrypt.checkpw(login_password_bytes, hashed_password)
 
     if not result:
         return False
 
-    return row_to_user_out(row[:5])
+    return row_to_user_in_db(row[:6])
 
 
 def create_access_token(data: dict, jwt_args: dict):
