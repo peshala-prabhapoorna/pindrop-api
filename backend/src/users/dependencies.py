@@ -51,12 +51,12 @@ async def get_current_user(
 
 
 # checks if the token is an active token
-# active tokens are stored in the 'token' column of 'users' table
+# active tokens are stored in the 'tokens' column of 'users' table
 async def get_current_active_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     current_user: Annotated[UserInDB, Depends(get_current_user)],
 ) -> UserInDB:
-    if token != current_user.token:
+    if token not in current_user.tokens:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Inactive session",

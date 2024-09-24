@@ -13,5 +13,5 @@ CREATE TABLE IF NOT EXISTS users (
     email           email NOT NULL UNIQUE,
     hashed_password TEXT NOT NULL,
     deleted_at      TIMESTAMP DEFAULT NULL,
-    token           TEXT DEFAULT NULL
+    tokens          TEXT[3] DEFAULT '{}'::TEXT[]
 );

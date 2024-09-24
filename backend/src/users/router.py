@@ -6,6 +6,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from src.utils import utc_now
 from src.database import db_connection, db_cursor
+from src.dependencies import oauth2_scheme
 from .dependencies import get_current_active_user, get_jwt_env_vars
 from .schemas import UserIn, UserInDB, UserNameEdit, Token
 from .utils import row_to_user_out, authenticate_user, create_access_token
@@ -59,13 +60,17 @@ async def login(
     access_token = create_access_token(
         data={"sub": user.email}, jwt_args=jwt_env
     )
+    if user.tokens is None:
+        user.tokens = [access_token]
+    else:
+        user.tokens.append(access_token)
 
     sql = (
         "UPDATE users "
-        "SET token = %s "
+        "SET tokens = %s "
         "WHERE id = %s AND deleted_at IS NULL;"
     )
-    values = (access_token, user.id)
+    values = (user.tokens, user.id)
     db_cursor.execute(sql, values)
     db_connection.commit()
 
@@ -74,14 +79,19 @@ async def login(
 
 @router.delete("/token")
 async def logout(
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)]
+    token: Annotated[str, Depends(oauth2_scheme)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
+    current_user.tokens.remove(token)
     sql = (
         "UPDATE users "
-        "SET token = NULL "
+        "SET tokens = %s "
         "WHERE id = %s AND deleted_at IS NULL;"
     )
-    values = (current_user.id,)
+    values = (
+        current_user.tokens,
+        current_user.id,
+    )
     db_cursor.execute(sql, values)
     db_connection.commit()
     return {"detail": "Session terminated"}

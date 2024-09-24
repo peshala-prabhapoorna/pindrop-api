@@ -1,3 +1,5 @@
+from typing import List
+
 from pydantic import BaseModel
 
 
@@ -10,7 +12,7 @@ class UserBase(BaseModel):
 
 class UserInDB(UserBase):
     id: int
-    token: str | None
+    tokens: List[str] | None
 
 
 # model to create a user

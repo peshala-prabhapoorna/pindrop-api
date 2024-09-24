@@ -13,7 +13,7 @@ def row_to_user_in_db(row) -> UserInDB:
         last_name=row[2],
         phone_num=row[3],
         email=row[4],
-        token=row[5],
+        tokens=row[5],
     )
     return user
 
@@ -31,7 +31,7 @@ def row_to_user_out(row) -> UserOut:
 
 def get_user(db_cursor, email: str) -> UserInDB:
     sql = (
-        "SELECT id, first_name, last_name, phone_num, email, token "
+        "SELECT id, first_name, last_name, phone_num, email, tokens "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
@@ -48,7 +48,7 @@ def get_user(db_cursor, email: str) -> UserInDB:
 def authenticate_user(db_cursor, email: str, password: str) -> UserInDB:
     sql = (
         "SELECT "
-        "id, first_name, last_name, phone_num, email, token, hashed_password "
+        "id, first_name, last_name, phone_num, email, tokens, hashed_password "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
