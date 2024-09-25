@@ -9,7 +9,12 @@ from src.database import db_connection, db_cursor
 from src.dependencies import oauth2_scheme
 from .dependencies import get_current_active_user, get_jwt_env_vars
 from .schemas import UserIn, UserInDB, UserNameEdit, Token
-from .utils import row_to_user_out, authenticate_user, create_access_token
+from .utils import (
+    row_to_user_out,
+    authenticate_user,
+    create_access_token,
+    remove_expired_tokens,
+)
 
 router = APIRouter(prefix="/api/v0/users", tags=["users"])
 
@@ -57,9 +62,11 @@ async def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
     access_token = create_access_token(
         data={"sub": user.email}, jwt_args=jwt_env
     )
+    user.tokens = remove_expired_tokens(user.tokens, jwt_env)
     if user.tokens is None:
         user.tokens = [access_token]
     else:

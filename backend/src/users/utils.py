@@ -1,6 +1,8 @@
 import bcrypt
 from datetime import timedelta
 import jwt
+from jwt.exceptions import ExpiredSignatureError
+from typing import List
 
 from src.utils import utc_now
 from .schemas import UserInDB, UserOut
@@ -78,3 +80,22 @@ def create_access_token(data: dict, jwt_args: dict):
         to_encode, jwt_args["secret"], algorithm=jwt_args["algorithm"]
     )
     return encoded_jwt
+
+
+def remove_expired_tokens(tokens: List[str], jwt_args: dict) -> List[str]:
+    if tokens is None:
+        return tokens
+
+    tokens_copy = tokens.copy()
+    for token in tokens_copy:
+        try:
+            jwt.decode(
+                token,
+                jwt_args["secret"],
+                algorithms=[jwt_args["algorithm"]],
+                options={"verify_exp": True},
+            )
+        except ExpiredSignatureError:
+            tokens.remove(token)
+
+    return tokens
