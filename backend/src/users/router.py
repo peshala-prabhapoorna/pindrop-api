@@ -128,15 +128,15 @@ async def get_user(
 @router.patch("")
 async def edit_user_name(
     user_names: UserNameEdit,
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     update_data = user_names.model_dump(exclude_unset=True)
     if update_data == {}:
         return {"message": "no new values to update"}
 
     name_model = UserNameEdit(
-        first_name=current_user.first_name,
-        last_name=current_user.last_name,
+        first_name=user.first_name,
+        last_name=user.last_name,
     )
     updated_name_model = name_model.model_copy(update=update_data)
 
@@ -149,7 +149,7 @@ async def edit_user_name(
     update_values = (
         updated_name_model.first_name,
         updated_name_model.last_name,
-        current_user.id,
+        user.id,
     )
     db_cursor.execute(update_sql, update_values)
     row = db_cursor.fetchone()
@@ -158,8 +158,10 @@ async def edit_user_name(
     return row_to_user_out(row)
 
 
-@router.delete("/{user_id}")
-async def delete_user(user_id: str):
+@router.delete("")
+async def delete_user(
+    user: Annotated[UserInDB, Depends(get_current_active_user)],
+):
     sql = (
         "UPDATE users "
         "SET deleted_at = %s "
@@ -168,7 +170,7 @@ async def delete_user(user_id: str):
     )
     values = (
         utc_now(),
-        user_id,
+        user.id,
     )
 
     db_cursor.execute(sql, values)
@@ -176,7 +178,7 @@ async def delete_user(user_id: str):
     db_connection.commit()
 
     if row is None:
-        return {"message": "user does not exist"}
+        return {"message": "failed to delete user account"}
 
     response = {
         "message": "user deleted",
