@@ -125,24 +125,19 @@ async def get_user(
     return row_to_user_out(row)
 
 
-@router.patch("/{user_id}")
-async def edit_user_name(user_id: str, user_names: UserNameEdit):
+@router.patch("")
+async def edit_user_name(
+    user_names: UserNameEdit,
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+):
     update_data = user_names.model_dump(exclude_unset=True)
     if update_data == {}:
         return {"message": "no new values to update"}
 
-    select_sql = (
-        "SELECT first_name, last_name "
-        "FROM users "
-        "WHERE id = %s AND deleted_at IS NULL;"
+    name_model = UserNameEdit(
+        first_name=current_user.first_name,
+        last_name=current_user.last_name,
     )
-    db_cursor.execute(select_sql, (user_id,))
-    row = db_cursor.fetchone()
-
-    if row is None:
-        return {"message": "user does not exist"}
-
-    name_model = UserNameEdit(first_name=row[0], last_name=row[1])
     updated_name_model = name_model.model_copy(update=update_data)
 
     update_sql = (
@@ -154,7 +149,7 @@ async def edit_user_name(user_id: str, user_names: UserNameEdit):
     update_values = (
         updated_name_model.first_name,
         updated_name_model.last_name,
-        user_id,
+        current_user.id,
     )
     db_cursor.execute(update_sql, update_values)
     row = db_cursor.fetchone()
