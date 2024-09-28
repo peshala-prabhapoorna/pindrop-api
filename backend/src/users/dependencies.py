@@ -4,10 +4,9 @@ from jwt.exceptions import InvalidTokenError
 from os import getenv
 from typing import Annotated
 
-from src.database import db_cursor
-from src.dependencies import oauth2_scheme
+from src.dependencies import Database, oauth2_scheme
 from .schemas import TokenData, UserInDB
-from .utils import get_user
+from .utils import get_user_by_email
 
 
 async def get_jwt_env_vars():
@@ -27,6 +26,7 @@ async def get_jwt_env_vars():
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
+    db: Annotated[Database, Depends(Database)],
 ) -> UserInDB:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -44,7 +44,7 @@ async def get_current_user(
         token_data = TokenData(email=email)
     except InvalidTokenError:
         raise credentials_exception
-    user = get_user(db_cursor, token_data.email)
+    user = get_user_by_email(token_data.email, db)
     if user is None:
         raise credentials_exception
     return user

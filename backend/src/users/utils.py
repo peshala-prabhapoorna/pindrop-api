@@ -5,6 +5,7 @@ from jwt.exceptions import ExpiredSignatureError
 from typing import List
 
 from src.utils import utc_now
+from src.dependencies import Database
 from .schemas import UserInDB, UserOut
 
 
@@ -31,15 +32,18 @@ def row_to_user_out(row) -> UserOut:
     return user_out
 
 
-def get_user(db_cursor, email: str) -> UserInDB:
+def get_user_by_email(
+    email: str,
+    db: Database,
+) -> UserInDB:
     sql = (
         "SELECT id, first_name, last_name, phone_num, email, tokens "
         "FROM users "
         "WHERE email = %s AND deleted_at IS NULL;"
     )
     values = (email,)
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
 
     if row is None:
         return None
@@ -47,7 +51,11 @@ def get_user(db_cursor, email: str) -> UserInDB:
     return row_to_user_in_db(row)
 
 
-def authenticate_user(db_cursor, email: str, password: str) -> UserInDB:
+def authenticate_user(
+    email: str,
+    password: str,
+    db: Database,
+) -> UserInDB:
     sql = (
         "SELECT "
         "id, first_name, last_name, phone_num, email, tokens, hashed_password "
@@ -55,8 +63,8 @@ def authenticate_user(db_cursor, email: str, password: str) -> UserInDB:
         "WHERE email = %s AND deleted_at IS NULL;"
     )
     values = (email,)
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
 
     if row is None:
         return False
@@ -82,7 +90,10 @@ def create_access_token(data: dict, jwt_args: dict):
     return encoded_jwt
 
 
-def remove_expired_tokens(tokens: List[str], jwt_args: dict) -> List[str]:
+def remove_expired_tokens(
+    tokens: List[str],
+    jwt_args: dict,
+) -> List[str]:
     if tokens is None:
         return tokens
 
@@ -104,8 +115,7 @@ def remove_expired_tokens(tokens: List[str], jwt_args: dict) -> List[str]:
 def update_jwt_tokens(
     tokens: List[str],
     user_id: int,
-    db_cursor,
-    db_connection,
+    db: Database,
 ) -> None:
     sql = (
         "UPDATE users "
@@ -113,5 +123,5 @@ def update_jwt_tokens(
         "WHERE id = %s AND deleted_at IS NULL;"
     )
     values = (tokens, user_id)
-    db_cursor.execute(sql, values)
-    db_connection.commit()
+    db.cursor.execute(sql, values)
+    db.connection.commit()

@@ -1,6 +1,8 @@
-from fastapi import APIRouter
+from typing import Annotated
 
-from src.database import db_connection, db_cursor
+from fastapi import APIRouter, Depends
+
+from src.dependencies import Database
 from src.utils import utc_now
 from .schemas import ReportIn, ReportEdit
 from .utils import row_to_report, rows_to_reports
@@ -10,7 +12,9 @@ router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
 
 
 @router.post("")
-async def create_report(report: ReportIn):
+async def create_report(
+    report: ReportIn, db: Annotated[Database, Depends(Database)]
+):
     sql = (
         "INSERT INTO reports(timestamp, title, location, directions, "
         "description, up_votes, down_votes)"
@@ -28,9 +32,9 @@ async def create_report(report: ReportIn):
         0,
     )
 
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
+    db.connection.commit()
 
     new_report = row_to_report(row)
 
@@ -38,18 +42,20 @@ async def create_report(report: ReportIn):
 
 
 @router.get("")
-async def get_all_reports():
-    db_cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
-    rows = db_cursor.fetchall()
+async def get_all_reports(db: Annotated[Database, Depends(Database)]):
+    db.cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
+    rows = db.cursor.fetchall()
 
     return rows_to_reports(rows)
 
 
 @router.get("/{report_id}")
-async def get_one_report(report_id):
+async def get_one_report(
+    report_id: int, db: Annotated[Database, Depends(Database)]
+):
     sql = "SELECT * FROM reports WHERE id = %s AND deleted_at IS NULL;"
-    db_cursor.execute(sql, (report_id,))
-    row = db_cursor.fetchone()
+    db.cursor.execute(sql, (report_id,))
+    row = db.cursor.fetchone()
 
     if row is None:
         return {"message": "report does not exist"}
@@ -60,16 +66,18 @@ async def get_one_report(report_id):
 
 
 @router.delete("/{report_id}")
-async def delete_report(report_id):
+async def delete_report(
+    report_id: int, db: Annotated[Database, Depends(Database)]
+):
     sql = (
         "UPDATE reports "
         "SET deleted_at = %s "
         "WHERE id = %s AND deleted_at IS NULL "
         "RETURNING title, deleted_at;"
     )
-    db_cursor.execute(sql, (utc_now(), report_id))
-    row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(sql, (utc_now(), report_id))
+    row = db.cursor.fetchone()
+    db.connection.commit()
 
     if row is None:
         return {"message": "report not deleted"}
@@ -78,7 +86,11 @@ async def delete_report(report_id):
 
 
 @router.patch("/{report_id}")
-async def edit_report(report_id: str, report: ReportEdit):
+async def edit_report(
+    report_id: int,
+    report: ReportEdit,
+    db: Annotated[Database, Depends(Database)],
+):
     update_data = report.model_dump(exclude_unset=True)
     if update_data == {}:
         return {"message": "no new values to update"}
@@ -88,8 +100,8 @@ async def edit_report(report_id: str, report: ReportEdit):
         "FROM reports "
         "WHERE id = %s AND deleted_at IS NULL;"
     )
-    db_cursor.execute(select_sql, (report_id,))
-    row = db_cursor.fetchone()
+    db.cursor.execute(select_sql, (report_id,))
+    row = db.cursor.fetchone()
 
     if row is None:
         return {"message": "report does not exist"}
@@ -112,9 +124,9 @@ async def edit_report(report_id: str, report: ReportEdit):
         updated_report_model.description,
         report_id,
     )
-    db_cursor.execute(update_sql, update_values)
-    updated_row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(update_sql, update_values)
+    updated_row = db.cursor.fetchone()
+    db.connection.commit()
 
     report = row_to_report(updated_row)
 

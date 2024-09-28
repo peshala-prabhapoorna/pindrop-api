@@ -5,8 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from src.utils import utc_now
-from src.database import db_connection, db_cursor
-from src.dependencies import oauth2_scheme
+from src.dependencies import Database, oauth2_scheme
 from .dependencies import get_current_active_user, get_jwt_env_vars
 from .schemas import UserIn, UserInDB, UserNameEdit, Token
 from .utils import (
@@ -21,7 +20,10 @@ router = APIRouter(prefix="/api/v0/users", tags=["users"])
 
 
 @router.post("")
-async def create_user(user: UserIn):
+async def create_user(
+    user: UserIn,
+    db: Annotated[Database, Depends(Database)],
+):
     sql = (
         "INSERT INTO users (created_at, first_name, last_name, phone_num, "
         "email, hashed_password) "
@@ -44,9 +46,9 @@ async def create_user(user: UserIn):
         hashed_password.decode("utf-8"),
     )
 
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
+    db.connection.commit()
 
     return row_to_user_out(row)
 
@@ -55,8 +57,9 @@ async def create_user(user: UserIn):
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
+    db: Annotated[Database, Depends(Database)],
 ) -> Token:
-    user = authenticate_user(db_cursor, form_data.username, form_data.password)
+    user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -73,7 +76,7 @@ async def login(
     else:
         user.tokens.append(access_token)
 
-    update_jwt_tokens(user.tokens, user.id, db_cursor, db_connection)
+    update_jwt_tokens(user.tokens, user.id, db)
 
     return Token(access_token=access_token, token_type="bearer")
 
@@ -82,14 +85,10 @@ async def login(
 async def logout(
     token: Annotated[str, Depends(oauth2_scheme)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    db: Annotated[Database, Depends(Database)],
 ):
     current_user.tokens.remove(token)
-    update_jwt_tokens(
-        current_user.tokens,
-        current_user.id,
-        db_cursor,
-        db_connection
-    )
+    update_jwt_tokens(current_user.tokens, current_user.id, db)
     return {"detail": "Session terminated"}
 
 
@@ -97,6 +96,7 @@ async def logout(
 async def get_user(
     user_id: str,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    db: Annotated[Database, Depends(Database)],
 ):
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
@@ -105,8 +105,8 @@ async def get_user(
     )
     values = (user_id,)
 
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
 
     if row is None:
         return {"message": "user does not exist"}
@@ -118,6 +118,7 @@ async def get_user(
 async def edit_user_name(
     user_names: UserNameEdit,
     user: Annotated[UserInDB, Depends(get_current_active_user)],
+    db: Annotated[Database, Depends(Database)],
 ):
     update_data = user_names.model_dump(exclude_unset=True)
     if update_data == {}:
@@ -140,9 +141,9 @@ async def edit_user_name(
         updated_name_model.last_name,
         user.id,
     )
-    db_cursor.execute(update_sql, update_values)
-    row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(update_sql, update_values)
+    row = db.cursor.fetchone()
+    db.connection.commit()
 
     return row_to_user_out(row)
 
@@ -150,6 +151,7 @@ async def edit_user_name(
 @router.delete("")
 async def delete_user(
     user: Annotated[UserInDB, Depends(get_current_active_user)],
+    db: Annotated[Database, Depends(Database)],
 ):
     sql = (
         "UPDATE users "
@@ -162,9 +164,9 @@ async def delete_user(
         user.id,
     )
 
-    db_cursor.execute(sql, values)
-    row = db_cursor.fetchone()
-    db_connection.commit()
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
+    db.connection.commit()
 
     if row is None:
         return {"message": "failed to delete user account"}
