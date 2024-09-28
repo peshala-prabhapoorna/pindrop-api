@@ -99,3 +99,19 @@ def remove_expired_tokens(tokens: List[str], jwt_args: dict) -> List[str]:
             tokens.remove(token)
 
     return tokens
+
+
+def update_jwt_tokens(
+    tokens: List[str],
+    user_id: int,
+    db_cursor,
+    db_connection,
+) -> None:
+    sql = (
+        "UPDATE users "
+        "SET tokens = %s "
+        "WHERE id = %s AND deleted_at IS NULL;"
+    )
+    values = (tokens, user_id)
+    db_cursor.execute(sql, values)
+    db_connection.commit()

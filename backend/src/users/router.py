@@ -14,6 +14,7 @@ from .utils import (
     authenticate_user,
     create_access_token,
     remove_expired_tokens,
+    update_jwt_tokens,
 )
 
 router = APIRouter(prefix="/api/v0/users", tags=["users"])
@@ -72,14 +73,7 @@ async def login(
     else:
         user.tokens.append(access_token)
 
-    sql = (
-        "UPDATE users "
-        "SET tokens = %s "
-        "WHERE id = %s AND deleted_at IS NULL;"
-    )
-    values = (user.tokens, user.id)
-    db_cursor.execute(sql, values)
-    db_connection.commit()
+    update_jwt_tokens(user.tokens, user.id, db_cursor, db_connection)
 
     return Token(access_token=access_token, token_type="bearer")
 
@@ -90,17 +84,12 @@ async def logout(
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     current_user.tokens.remove(token)
-    sql = (
-        "UPDATE users "
-        "SET tokens = %s "
-        "WHERE id = %s AND deleted_at IS NULL;"
-    )
-    values = (
+    update_jwt_tokens(
         current_user.tokens,
         current_user.id,
+        db_cursor,
+        db_connection
     )
-    db_cursor.execute(sql, values)
-    db_connection.commit()
     return {"detail": "Session terminated"}
 
 
