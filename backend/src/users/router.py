@@ -164,7 +164,7 @@ async def delete_user(
 ):
     sql = (
         "UPDATE users "
-        "SET deleted_at = %s "
+        "SET tokens = '{}'::TEXT[], deleted_at = %s "
         "WHERE id = %s AND deleted_at IS NULL "
         "RETURNING first_name, last_name, deleted_at;"
     )
