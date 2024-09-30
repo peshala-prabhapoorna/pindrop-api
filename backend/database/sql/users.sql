@@ -1,8 +1,14 @@
-CREATE EXTENSION citext;
-CREATE DOMAIN email AS citext
-    CHECK (
-        VALUE ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
-);
+DO $$
+BEGIN
+    CREATE EXTENSION IF NOT EXISTS citext;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname='email') THEN
+        CREATE DOMAIN email AS citext
+            CHECK (
+                VALUE ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+        );
+    END IF;
+END
+$$;
 
 CREATE TABLE IF NOT EXISTS users (
     id              SERIAL PRIMARY KEY,

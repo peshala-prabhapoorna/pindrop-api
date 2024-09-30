@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends
 
 from src.dependencies import Database
 from src.utils import utc_now
+from src.users.dependencies import get_current_active_user
+from src.users.schemas import UserInDB
 from .schemas import ReportIn, ReportEdit
 from .utils import row_to_report, rows_to_reports
 
@@ -13,17 +15,20 @@ router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
 
 @router.post("")
 async def create_report(
-    report: ReportIn, db: Annotated[Database, Depends(Database)]
+    report: ReportIn,
+    db: Annotated[Database, Depends(Database)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
     sql = (
-        "INSERT INTO reports(timestamp, title, location, directions, "
-        "description, up_votes, down_votes)"
-        "VALUES(%s, %s, %s, %s, %s, %s, %s)"
+        "INSERT INTO reports(timestamp, user_id, title, location, "
+        "directions, description, up_votes, down_votes)"
+        "VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
         "RETURNING *;"
     )
 
     values = (
         utc_now(),
+        current_user.id,
         report.title,
         report.location,
         report.directions,

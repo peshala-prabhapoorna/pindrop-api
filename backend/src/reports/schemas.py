@@ -18,6 +18,7 @@ class ReportIn(ReportBase):
 class ReportOut(ReportBase):
     id: int
     timestamp: datetime
+    user_id: int
     up_votes: int
     down_votes: int
 
