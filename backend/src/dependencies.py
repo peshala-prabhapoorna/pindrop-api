@@ -10,4 +10,4 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v0/users/token")
 class Database:
     def __init__(self):
         self.connection: psycopg2.extensions.connection = db_connection
-        self.cursor: psycopg2.extensions.connection = db_cursor
+        self.cursor: psycopg2.extensions.cursor = db_cursor

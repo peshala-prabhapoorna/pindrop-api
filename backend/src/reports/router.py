@@ -1,6 +1,6 @@
-from typing import Annotated
+from typing import Annotated, Tuple
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.dependencies import Database
 from src.utils import utc_now
@@ -72,20 +72,43 @@ async def get_one_report(
 
 @router.delete("/{report_id}")
 async def delete_report(
-    report_id: int, db: Annotated[Database, Depends(Database)]
+    report_id: int,
+    db: Annotated[Database, Depends(Database)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
+    sql = "SELECT user_id FROM reports WHERE id=%s AND deleted_at IS NULL;"
+    values = (report_id,)
+    db.cursor.execute(sql, values)
+    row: Tuple | None = db.cursor.fetchone()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="report does not exist",
+        )
+
+    if current_user.id != row[0]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="report is not owned by the user",
+        )
+
     sql = (
         "UPDATE reports "
         "SET deleted_at = %s "
         "WHERE id = %s AND deleted_at IS NULL "
         "RETURNING title, deleted_at;"
     )
-    db.cursor.execute(sql, (utc_now(), report_id))
-    row = db.cursor.fetchone()
+    values = (utc_now(), report_id)
+    db.cursor.execute(sql, values)
+    row: Tuple | None = db.cursor.fetchone()
     db.connection.commit()
 
     if row is None:
-        return {"message": "report not deleted"}
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to delete report",
+        )
 
     return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
 
