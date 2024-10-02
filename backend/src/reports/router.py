@@ -8,7 +8,7 @@ from src.users.dependencies import get_current_active_user
 from src.users.schemas import UserInDB
 from .schemas import ReportIn, ReportEdit, ReportInDB
 from .dependencies import authorize_changes_to_report
-from .utils import row_to_report, rows_to_reports
+from .utils import get_report_by_id, row_to_report, rows_to_reports
 
 
 router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
@@ -59,15 +59,7 @@ async def get_all_reports(db: Annotated[Database, Depends(Database)]):
 async def get_one_report(
     report_id: int, db: Annotated[Database, Depends(Database)]
 ):
-    sql = "SELECT * FROM reports WHERE id = %s AND deleted_at IS NULL;"
-    db.cursor.execute(sql, (report_id,))
-    row = db.cursor.fetchone()
-
-    if row is None:
-        return {"message": "report does not exist"}
-
-    report = row_to_report(row)
-
+    report: ReportInDB = get_report_by_id(report_id, db)
     return report
 
 

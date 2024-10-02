@@ -1,3 +1,8 @@
+from typing import Tuple
+
+from fastapi import HTTPException, status
+
+from src.dependencies import Database
 from .schemas import ReportInDB, ReportsInDB
 
 
@@ -24,3 +29,19 @@ def rows_to_reports(rows):
         reports.append(report)
 
     return ReportsInDB(reports=reports)
+
+
+def get_report_by_id(report_id: int, db: Database) -> ReportInDB:
+    sql = "SELECT * FROM reports WHERE id=%s AND deleted_at IS NULL;"
+    values = (report_id,)
+    db.cursor.execute(sql, values)
+    row: Tuple | None = db.cursor.fetchone()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="report does not exist",
+        )
+
+    report: ReportInDB = row_to_report(row)
+    return report
