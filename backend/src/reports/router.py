@@ -6,7 +6,8 @@ from src.dependencies import Database
 from src.utils import utc_now
 from src.users.dependencies import get_current_active_user
 from src.users.schemas import UserInDB
-from .schemas import ReportIn, ReportEdit
+from .schemas import ReportIn, ReportEdit, ReportInDB
+from .dependencies import authorize_changes_to_report
 from .utils import row_to_report, rows_to_reports
 
 
@@ -72,34 +73,16 @@ async def get_one_report(
 
 @router.delete("/{report_id}")
 async def delete_report(
-    report_id: int,
     db: Annotated[Database, Depends(Database)],
-    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+    report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
 ):
-    sql = "SELECT user_id FROM reports WHERE id=%s AND deleted_at IS NULL;"
-    values = (report_id,)
-    db.cursor.execute(sql, values)
-    row: Tuple | None = db.cursor.fetchone()
-
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="report does not exist",
-        )
-
-    if current_user.id != row[0]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="report is not owned by the user",
-        )
-
     sql = (
         "UPDATE reports "
         "SET deleted_at = %s "
         "WHERE id = %s AND deleted_at IS NULL "
         "RETURNING title, deleted_at;"
     )
-    values = (utc_now(), report_id)
+    values = (utc_now(), report.id)
     db.cursor.execute(sql, values)
     row: Tuple | None = db.cursor.fetchone()
     db.connection.commit()
@@ -115,27 +98,22 @@ async def delete_report(
 
 @router.patch("/{report_id}")
 async def edit_report(
-    report_id: int,
-    report: ReportEdit,
+    report_update: ReportEdit,
     db: Annotated[Database, Depends(Database)],
-):
-    update_data = report.model_dump(exclude_unset=True)
+    report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
+) -> ReportInDB:
+    update_data = report_update.model_dump(exclude_unset=True)
     if update_data == {}:
-        return {"message": "no new values to update"}
-
-    select_sql = (
-        "SELECT title, location, directions, description "
-        "FROM reports "
-        "WHERE id = %s AND deleted_at IS NULL;"
-    )
-    db.cursor.execute(select_sql, (report_id,))
-    row = db.cursor.fetchone()
-
-    if row is None:
-        return {"message": "report does not exist"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="no new values to update",
+        )
 
     report_in_db_model = ReportEdit(
-        title=row[0], location=row[1], directions=row[2], description=row[3]
+        title=report.title,
+        location=report.location,
+        directions=report.directions,
+        description=report.description,
     )
 
     updated_report_model = report_in_db_model.model_copy(update=update_data)
@@ -150,12 +128,12 @@ async def edit_report(
         updated_report_model.location,
         updated_report_model.directions,
         updated_report_model.description,
-        report_id,
+        report.id,
     )
     db.cursor.execute(update_sql, update_values)
     updated_row = db.cursor.fetchone()
     db.connection.commit()
 
-    report = row_to_report(updated_row)
+    response_report: ReportInDB = row_to_report(updated_row)
 
-    return report
+    return response_report

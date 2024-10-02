@@ -15,7 +15,7 @@ class ReportIn(ReportBase):
 
 
 # model to use in responses
-class ReportOut(ReportBase):
+class ReportInDB(ReportBase):
     id: int
     timestamp: datetime
     user_id: int
@@ -24,7 +24,7 @@ class ReportOut(ReportBase):
 
 
 # model to get input for report updates/edits
-class ReportEdit(ReportBase):
+class ReportEdit(BaseModel):
     title: str | None = None
     location: str | None = None
     directions: str | None = None
@@ -32,5 +32,5 @@ class ReportEdit(ReportBase):
 
 
 # mode to use in reponses that sends multiple reports
-class ReportsOut(BaseModel):
-    reports: list[ReportOut]
+class ReportsInDB(BaseModel):
+    reports: list[ReportInDB]

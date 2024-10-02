@@ -1,8 +1,8 @@
-from .schemas import ReportOut, ReportsOut
+from .schemas import ReportInDB, ReportsInDB
 
 
-def row_to_report(row):
-    report = ReportOut(
+def row_to_report(row) -> ReportInDB:
+    report = ReportInDB(
         id=row[0],
         timestamp=row[1],
         user_id=row[2],
@@ -23,4 +23,4 @@ def rows_to_reports(rows):
         report = row_to_report(row)
         reports.append(report)
 
-    return ReportsOut(reports=reports)
+    return ReportsInDB(reports=reports)
