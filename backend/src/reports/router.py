@@ -20,13 +20,13 @@ async def create_report(
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ):
+    # create report
     sql = (
         "INSERT INTO reports(timestamp, user_id, title, location, "
         "directions, description)"
         "VALUES(%s, %s, %s, %s, %s, %s)"
         "RETURNING *;"
     )
-
     values = (
         utc_now(),
         current_user.id,
@@ -35,12 +35,20 @@ async def create_report(
         report.directions,
         report.description,
     )
-
     db.cursor.execute(sql, values)
     row = db.cursor.fetchone()
     db.connection.commit()
 
-    new_report = row_to_report(row)
+    new_report: ReportInDB = row_to_report(row)
+
+    # report_stats record
+    sql = (
+        "INSERT INTO report_stats(report_id) "
+        "VALUES(%s);"
+    )
+    values = (new_report.id,)
+    db.cursor.execute(sql, values)
+    db.connection.commit()
 
     return new_report
 
