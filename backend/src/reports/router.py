@@ -22,8 +22,8 @@ async def create_report(
 ):
     sql = (
         "INSERT INTO reports(timestamp, user_id, title, location, "
-        "directions, description, up_votes, down_votes)"
-        "VALUES(%s, %s, %s, %s, %s, %s, %s, %s)"
+        "directions, description)"
+        "VALUES(%s, %s, %s, %s, %s, %s)"
         "RETURNING *;"
     )
 
@@ -34,8 +34,6 @@ async def create_report(
         report.location,
         report.directions,
         report.description,
-        0,
-        0,
     )
 
     db.cursor.execute(sql, values)

@@ -19,8 +19,6 @@ class ReportInDB(ReportBase):
     id: int
     timestamp: datetime
     user_id: int
-    up_votes: int
-    down_votes: int
 
 
 # model to get input for report updates/edits

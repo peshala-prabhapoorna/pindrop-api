@@ -15,8 +15,6 @@ def row_to_report(row) -> ReportInDB:
         location=row[4],
         directions=row[5],
         description=row[6],
-        up_votes=row[7],
-        down_votes=row[8],
     )
 
     return report

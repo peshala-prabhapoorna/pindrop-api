@@ -6,7 +6,5 @@ CREATE TABLE IF NOT EXISTS reports (
     location    POINT NOT NULL,
     directions  VARCHAR(512) NOT NULL,
     description VARCHAR(1024) NOT NULL,
-    up_votes    INTEGER,
-    down_votes  INTEGER,
     deleted_at  TIMESTAMP
 );
