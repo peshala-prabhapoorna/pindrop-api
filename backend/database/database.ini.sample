@@ -1,0 +1,4 @@
+[postgresql]
+database=db_name
+user=user_name
+password=user_password
