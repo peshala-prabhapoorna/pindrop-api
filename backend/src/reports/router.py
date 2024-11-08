@@ -37,7 +37,6 @@ async def create_report(
     )
     db.cursor.execute(sql, values)
     row = db.cursor.fetchone()
-    db.connection.commit()
 
     new_report: ReportInDB = row_to_report(row)
 
