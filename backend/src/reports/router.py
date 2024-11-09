@@ -6,10 +6,25 @@ from src.dependencies import Database
 from src.utils import utc_now
 from src.users.dependencies import get_current_active_user
 from src.users.schemas import UserInDB
-from .schemas import ReportIn, ReportEdit, ReportInDB
+from .schemas import (
+    ReportIn,
+    ReportEdit,
+    ReportInDB,
+    ReportStatEdit,
+    ReportStatInDB,
+    VoteEdit,
+    VoteInDB,
+)
 from .dependencies import authorize_changes_to_report
-from .utils import get_report_by_id, row_to_report, rows_to_reports
-
+from .utils import (
+    get_previous_vote,
+    get_report_by_id,
+    get_report_stats,
+    record_vote,
+    row_to_report,
+    rows_to_reports,
+    update_report_stats,
+)
 
 router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
 
@@ -41,10 +56,7 @@ async def create_report(
     new_report: ReportInDB = row_to_report(row)
 
     # report_stats record
-    sql = (
-        "INSERT INTO report_stats(report_id) "
-        "VALUES(%s);"
-    )
+    sql = "INSERT INTO report_stats(report_id) VALUES (%s);"
     values = (new_report.id,)
     db.cursor.execute(sql, values)
     db.connection.commit()
@@ -134,3 +146,45 @@ async def edit_report(
     response_report: ReportInDB = row_to_report(updated_row)
 
     return response_report
+
+
+@router.post("/{report_id}/upvote")
+async def upvote(
+    report_id: int,
+    db: Annotated[Database, Depends(Database)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+) -> ReportStatInDB:
+    # check the existence of the report
+    _: ReportInDB = get_report_by_id(report_id, db)
+
+    previous_vote: VoteInDB | None = get_previous_vote(
+        report_id,
+        current_user.id,
+        db,
+    )
+    report_stat: ReportStatInDB = get_report_stats(report_id, db)
+
+    is_new_vote = False
+    new_vote: VoteEdit | None = VoteEdit(
+        is_upvoted=True,
+        is_downvoted=False,
+        timestamp=utc_now()
+    )
+    if previous_vote is None:
+        is_new_vote = True
+        report_stat.upvote_count += 1
+    elif previous_vote.is_upvoted:
+        new_vote = None
+        report_stat.upvote_count -= 1
+    elif previous_vote.is_downvoted:
+        report_stat.downvote_count -= 1
+        report_stat.upvote_count += 1
+
+    stats_update = ReportStatEdit(
+        view_count=report_stat.view_count,
+        upvote_count=report_stat.upvote_count,
+        downvote_count=report_stat.downvote_count
+    )
+    record_vote(is_new_vote, report_id, current_user.id, new_vote, db)
+    updated_report_stat = update_report_stats(report_id, stats_update, db)
+    return updated_report_stat
