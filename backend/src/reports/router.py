@@ -188,3 +188,45 @@ async def upvote(
     record_vote(is_new_vote, report_id, current_user.id, new_vote, db)
     updated_report_stat = update_report_stats(report_id, stats_update, db)
     return updated_report_stat
+
+
+@router.post("/{report_id}/downvote")
+async def downvote(
+    report_id: int,
+    db: Annotated[Database, Depends(Database)],
+    current_user: Annotated[UserInDB, Depends(get_current_active_user)],
+) -> ReportStatInDB:
+    # check the existence of the report
+    _: ReportInDB = get_report_by_id(report_id, db)
+
+    previous_vote: VoteInDB | None = get_previous_vote(
+        report_id,
+        current_user.id,
+        db,
+    )
+    report_stat: ReportStatInDB = get_report_stats(report_id, db)
+
+    is_new_vote = False
+    new_vote: VoteEdit | None = VoteEdit(
+        is_upvoted=False,
+        is_downvoted=True,
+        timestamp=utc_now()
+    )
+    if previous_vote is None:
+        is_new_vote = True
+        report_stat.downvote_count += 1
+    elif previous_vote.is_downvoted:
+        new_vote = None
+        report_stat.downvote_count -= 1
+    elif previous_vote.is_upvoted:
+        report_stat.upvote_count -= 1
+        report_stat.downvote_count += 1
+
+    stats_update = ReportStatEdit(
+        view_count=report_stat.view_count,
+        upvote_count=report_stat.upvote_count,
+        downvote_count=report_stat.downvote_count
+    )
+    record_vote(is_new_vote, report_id, current_user.id, new_vote, db)
+    updated_report_stat = update_report_stats(report_id, stats_update, db)
+    return updated_report_stat

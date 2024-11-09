@@ -200,8 +200,8 @@ def record_vote(
     else:
         sql = (
             "UPDATE votes "
-            "SET is_upvoted = %s, is_down_voted = %s, timestamp = %s "
-            "WHERE report_id = %s, user_id = %s;"
+            "SET is_upvoted = %s, is_downvoted = %s, timestamp = %s "
+            "WHERE report_id = %s AND user_id = %s;"
         )
         values = (
             vote_data.is_upvoted,
