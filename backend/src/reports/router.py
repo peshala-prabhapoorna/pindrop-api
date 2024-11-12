@@ -154,6 +154,18 @@ async def upvote(
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportStatInDB:
+    """
+    Adds or removes the user's upvote for a report.
+
+    ## Parameters:
+    - `report_id`         (int): id number of the report
+    - `db`           (Database): object with database access
+    - `current_user` (UserInDB): request sending user's db record
+
+    ## Returning:
+    `ReportStatInDB`: db record of the stats of the report
+    """
+
     # check the existence of the report
     _: ReportInDB = get_report_by_id(report_id, db)
 
@@ -166,9 +178,7 @@ async def upvote(
 
     is_new_vote = False
     new_vote: VoteEdit | None = VoteEdit(
-        is_upvoted=True,
-        is_downvoted=False,
-        timestamp=utc_now()
+        is_upvoted=True, is_downvoted=False, timestamp=utc_now()
     )
     if previous_vote is None:
         is_new_vote = True
@@ -183,7 +193,7 @@ async def upvote(
     stats_update = ReportStatEdit(
         view_count=report_stat.view_count,
         upvote_count=report_stat.upvote_count,
-        downvote_count=report_stat.downvote_count
+        downvote_count=report_stat.downvote_count,
     )
     record_vote(is_new_vote, report_id, current_user.id, new_vote, db)
     updated_report_stat = update_report_stats(report_id, stats_update, db)
@@ -196,6 +206,18 @@ async def downvote(
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportStatInDB:
+    """
+    Adds or removes the user's downvote for a report.
+
+    ## Parameters:
+    - `report_id`         (int): id number of the report
+    - `db`           (Database): object with database access
+    - `current_user` (UserInDB): request sending user's db record
+
+    ## Returning:
+    `ReportStatInDB`: db record of the stats of the report
+    """
+
     # check the existence of the report
     _: ReportInDB = get_report_by_id(report_id, db)
 
@@ -208,9 +230,7 @@ async def downvote(
 
     is_new_vote = False
     new_vote: VoteEdit | None = VoteEdit(
-        is_upvoted=False,
-        is_downvoted=True,
-        timestamp=utc_now()
+        is_upvoted=False, is_downvoted=True, timestamp=utc_now()
     )
     if previous_vote is None:
         is_new_vote = True
@@ -225,7 +245,7 @@ async def downvote(
     stats_update = ReportStatEdit(
         view_count=report_stat.view_count,
         upvote_count=report_stat.upvote_count,
-        downvote_count=report_stat.downvote_count
+        downvote_count=report_stat.downvote_count,
     )
     record_vote(is_new_vote, report_id, current_user.id, new_vote, db)
     updated_report_stat = update_report_stats(report_id, stats_update, db)

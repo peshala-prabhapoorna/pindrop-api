@@ -37,6 +37,17 @@ def rows_to_reports(rows):
 
 
 def row_to_vote(row) -> VoteInDB:
+    """
+    Converts a Tuple containing data of a vote into a VoteInDB object.
+
+    Parameters:
+    `row` (Tuple):
+    (`report_id`, `user_id`, `is_upvoted`, `is_downvoted`, `timestamp`)
+
+    Returns:
+    VoteInDB: An object representing the database record of a vote.
+    """
+
     vote = VoteInDB(
         report_id=row[0],
         user_id=row[1],
@@ -48,6 +59,18 @@ def row_to_vote(row) -> VoteInDB:
 
 
 def row_to_report_stat(row) -> ReportStatInDB:
+    """
+    Converts a Tuple containing statistics data of a report into a
+    ReportInDB object.
+
+    Parameters:
+    `row` (Tuple):
+    (`report_id`, `view_count`, `upvote_count`, `downvote_count`)
+
+    Returns:
+    ReportInDB: An object representing the db record of report stats
+    """
+
     report_stat = ReportStatInDB(
         report_id=row[0],
         view_count=row[1],
