@@ -1,63 +1,75 @@
-# Pin-Drop Report
-Pinner Report is a location-based issue reporting web application. backend  
-of the application is developed using FastAPI in Python and the frontend  
-using SolidJS.
+# Pindrop API
 
-## Description
+Python version - 3.12.3
 
-An in-depth paragraph about your project and overview of use.
+## Get started: for devs
 
-## Getting Started
+1. Spin up a virtual environment in `/backend/`. We're using `virtualenv`.
 
-### Dependencies
+>[!WARNING]
+>Instructions below assume that your working directory is `/backend/`
 
-* Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-* ex. Windows 10
-
-### Installing
-
-* How/where to download your program
-* Any modifications needed to be made to files/folders
-
-### Executing program
-
-* How to run the program
-* Step-by-step bullets
-```
-code blocks for commands
+```bash
+virtualenv venv
+source venv/bin/activate
 ```
 
-## Help
+2. Install dependencies
 
-Any advise for common problems or issues.
+```bash
+pip3 install -r requirements.txt
 ```
-command to run if program contains helper info
+
+Installing dependencies using the requirements file has not worked well for
+me so far. So, if it fails, **install each dependency one by one**. Some
+dependencies require more than a simple `pip` install.
+
+   - fastapi
+
+`pip` install command is different. Refer the FastAPI docs.
+
+```bash
+pip install "fastapi[standard]"
 ```
 
-## Authors
+   - psycopg2
 
-Contributors names and contact info
+`python3-devel`, `libpg-devel` libraries are required. The exat names of the
+libraries depend on the OS or the Linux distribution. Look it up!
 
-ex. Dominique Pizzie  
-ex. [@DomPizzie](https://twitter.com/dompizzie)
+   - pyjwt
+   - bcrypt
 
-## Version History
+`pip` install command is different. Refer the FastAPI authorization docs.
 
-* 0.2
-    * Various bug fixes and optimizations
-    * See [commit change]() or See [release history]()
-* 0.1
-    * Initial Release
+```bash
+pip install "passlib[bcrypt]"
+```
 
-## License
 
-This project is licensed under the [NAME HERE] License - see the LICENSE.md file for details
+3. Setup PostgreSQL database
 
-## Acknowledgments
+    1. Initiate Postgresql.
+    2. Add password to default user (postgres).
+    3. Create new user with password (admin of the pindrop database).
+    4. Alter newly created user with appropriate privileges (user roles).
+    5. Change the authentication mode form `peer` to `md5`.
+    6. Login to the database as the new user.
+    7. Create database for pindrop.
+    8. Create a user to be used by the api.
+    9. Grant relevant privileges to the newly created user.
 
-Inspiration, code snippets, etc.
-* [awesome-readme](https://github.com/matiassingers/awesome-readme)
-* [PurpleBooth](https://gist.github.com/PurpleBooth/109311bb0361f32d87a2)
-* [dbader](https://github.com/dbader/readme-template)
-* [zenorocha](https://gist.github.com/zenorocha/4526327)
-* [fvcproductions](https://gist.github.com/fvcproductions/1bfc2d4aecb01a834b46)
+4. Fill in the values of config files
+
+Sample config files are given. Copy them and fill in the values.
+
+   - .env.sample
+   - database/database.ini
+
+5. Run the backend application using fastapi cli
+
+```bash
+fastapi dev app/main.py
+```
+
+Happy coding!
