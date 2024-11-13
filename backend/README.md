@@ -24,7 +24,7 @@ Installing dependencies using the requirements file has not worked well for
 me so far. So, if it fails, **install each dependency one by one**. Some
 dependencies require more than a simple `pip` install.
 
-    - fastapi
+   - fastapi
 
 `pip` install command is different. Refer the FastAPI docs.
 
@@ -32,13 +32,13 @@ dependencies require more than a simple `pip` install.
 pip install "fastapi[standard]"
 ```
 
-    - psycopg2
+   - psycopg2
 
 `python3-devel`, `libpg-devel` libraries are required. The exat names of the
 libraries depend on the OS or the Linux distribution. Look it up!
 
-    - pyjwt
-    - bcrypt
+   - pyjwt
+   - bcrypt
 
 `pip` install command is different. Refer the FastAPI authorization docs.
 
@@ -63,8 +63,8 @@ pip install "passlib[bcrypt]"
 
 Sample config files are given. Copy them and fill in the values.
 
-    - .env.sample
-    - database/database.ini
+   - .env.sample
+   - database/database.ini
 
 5. Run the backend application using fastapi cli
 
