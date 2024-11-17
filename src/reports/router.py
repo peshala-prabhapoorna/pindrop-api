@@ -1,4 +1,4 @@
-from typing import Annotated, Tuple
+from typing import Annotated, Dict, Tuple
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -12,6 +12,7 @@ from .schemas import (
     ReportInDB,
     ReportStatEdit,
     ReportStatInDB,
+    ReportsInDB,
     VoteEdit,
     VoteInDB,
 )
@@ -34,7 +35,7 @@ async def create_report(
     report: ReportIn,
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
-):
+) -> ReportInDB:
     # create report
     sql = (
         "INSERT INTO reports(timestamp, user_id, title, location, "
@@ -65,7 +66,9 @@ async def create_report(
 
 
 @router.get("")
-async def get_all_reports(db: Annotated[Database, Depends(Database)]):
+async def get_all_reports(
+    db: Annotated[Database, Depends(Database)]
+) -> ReportsInDB:
     db.cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db.cursor.fetchall()
 
@@ -75,7 +78,7 @@ async def get_all_reports(db: Annotated[Database, Depends(Database)]):
 @router.get("/{report_id}")
 async def get_one_report(
     report_id: int, db: Annotated[Database, Depends(Database)]
-):
+) -> ReportInDB:
     report: ReportInDB = get_report_by_id(report_id, db)
     return report
 
@@ -84,7 +87,7 @@ async def get_one_report(
 async def delete_report(
     db: Annotated[Database, Depends(Database)],
     report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
-):
+) -> Dict:
     sql = (
         "UPDATE reports "
         "SET deleted_at = %s "

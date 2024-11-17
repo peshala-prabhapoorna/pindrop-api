@@ -27,7 +27,7 @@ def row_to_report(row) -> ReportInDB:
     return report
 
 
-def rows_to_reports(rows):
+def rows_to_reports(rows) -> ReportsInDB:
     reports = []
     for row in rows:
         report = row_to_report(row)
