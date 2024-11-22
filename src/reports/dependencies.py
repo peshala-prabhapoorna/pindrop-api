@@ -6,7 +6,7 @@ from src.dependencies import Database
 from src.users.schemas import UserInDB
 from src.users.dependencies import get_current_active_user
 from .schemas import ReportInDB
-from .utils import get_report_by_id
+from .queries import get_report_by_id
 
 
 async def authorize_changes_to_report(

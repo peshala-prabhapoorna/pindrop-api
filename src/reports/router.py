@@ -17,13 +17,12 @@ from .schemas import (
     VoteInDB,
 )
 from .dependencies import authorize_changes_to_report
-from .utils import (
+from .utils import row_to_report, rows_to_reports
+from .queries import (
     get_previous_vote,
     get_report_by_id,
     get_report_stats,
     record_vote,
-    row_to_report,
-    rows_to_reports,
     update_report_stats,
 )
 
@@ -67,7 +66,7 @@ async def create_report(
 
 @router.get("")
 async def get_all_reports(
-    db: Annotated[Database, Depends(Database)]
+    db: Annotated[Database, Depends(Database)],
 ) -> ReportsInDB:
     db.cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db.cursor.fetchall()
