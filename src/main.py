@@ -7,7 +7,20 @@ from src.users import router as users
 
 load_dotenv()
 
-app = FastAPI()
+app = FastAPI(
+    title="pindrop-api",
+    description="API for location based issue reporting.",
+    version="1.0.0",
+    contact={
+        "name": "RAP Prabhapoorna",
+        "url": "https://www.linkedin.com/in/peshala-prabhapoorna/",
+        "email": "peshalaprabhapoorna@gmail.com",
+    },
+    license_info={
+        "name": "AGPL-3.0",
+        "url": "https://www.gnu.org/licenses/agpl-3.0",
+    }
+)
 
 
 app.include_router(reports.router)
