@@ -29,12 +29,27 @@ from .queries import (
 router = APIRouter(prefix="/api/v0/reports", tags=["reports"])
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Create a report",
+    response_description="Newly created report",
+)
 async def create_report(
     report: ReportIn,
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportInDB:
+    """
+    Create a new report.
+
+    Only signed in users are authorized to use this endpoint.
+
+    - **title**: A short topic summarising the issue
+    - **location**: Location of the issue beging reported
+    - **directions**: Landmarks/tips to locate the issue location.
+    - **description**: A detailed report of the issue.
+    """
+
     # create report
     sql = (
         "INSERT INTO reports(timestamp, user_id, title, location, "
@@ -64,29 +79,68 @@ async def create_report(
     return new_report
 
 
-@router.get("")
+@router.get(
+    "",
+    summary="(DANGEROUS) Fetch all reports",
+    response_description="All reports in the database",
+)
 async def get_all_reports(
     db: Annotated[Database, Depends(Database)],
 ) -> ReportsInDB:
+    """
+    Fetches all reports that have not been deleted.
+
+    No authorization required.
+
+    **WARNING!** Can be used by bad actors to easily shutdown the server
+    due to limited bandwidth, if there is a considerable number of
+    reports.
+    """
+
     db.cursor.execute("SELECT * FROM reports WHERE deleted_at IS NULL;")
     rows = db.cursor.fetchall()
 
     return rows_to_reports(rows)
 
 
-@router.get("/{report_id}")
+@router.get(
+    "/{report_id}",
+    summary="Fetch a report",
+    response_description="Requested report",
+)
 async def get_one_report(
     report_id: int, db: Annotated[Database, Depends(Database)]
 ) -> ReportInDB:
+    """
+    Fetch the requested report.
+
+    No authorization required.
+
+    - **report_id**: ID number of the report to be fetched
+    """
+
     report: ReportInDB = get_report_by_id(report_id, db)
     return report
 
 
-@router.delete("/{report_id}")
+@router.delete(
+    "/{report_id}",
+    summary="Delete a report",
+    response_description="Deletion status update",
+)
 async def delete_report(
     db: Annotated[Database, Depends(Database)],
     report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
 ) -> Dict:
+    """
+    Soft delete a report. After soft deletion a report is in a
+    recoverable state.
+
+    Only the creator of a post is authorized to delete the report.
+
+    - **report_id**: ID number of the report to be deleted
+    """
+
     sql = (
         "UPDATE reports "
         "SET deleted_at = %s "
@@ -107,12 +161,31 @@ async def delete_report(
     return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
 
 
-@router.patch("/{report_id}")
+@router.patch(
+    "/{report_id}",
+    summary="Edit a report",
+    response_description="Updated report",
+)
 async def edit_report(
     report_update: ReportEdit,
     db: Annotated[Database, Depends(Database)],
     report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
 ) -> ReportInDB:
+    """
+    Make irreversible edits to a report. A blank value for a field is
+    interpreted as editing the field to not have a value. Omit the
+    fields that are not being edited from the request.
+
+    Only the creator of a post is authorized to edit the report.
+
+    - **report_id**: ID number of the report to be edited.
+
+    - **title**: A short topic summarising the issue
+    - **location**: Location of the issue beging reported
+    - **directions**: Landmarks/tips to locate the issue location.
+    - **description**: A detailed report of the issue.
+    """
+
     update_data = report_update.model_dump(exclude_unset=True)
     if update_data == {}:
         raise HTTPException(
@@ -150,22 +223,24 @@ async def edit_report(
     return response_report
 
 
-@router.post("/{report_id}/upvote")
+@router.post(
+    "/{report_id}/upvote",
+    summary="Upvote a report",
+    response_description="Summary of report statistics",
+)
 async def upvote(
     report_id: int,
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportStatInDB:
     """
-    Adds or removes the user's upvote for a report.
+    Adds or removes a user's upvote for a report. Upvote followed
+    by an upvote, removes the first upvote. Upvote after a downvote,
+    removes the downvote and adds an upvote.
 
-    ## Parameters:
-    - `report_id`         (int): id number of the report
-    - `db`           (Database): object with database access
-    - `current_user` (UserInDB): request sending user's db record
+    Only signed in users are authorized to use this endpoint.
 
-    ## Returning:
-    `ReportStatInDB`: db record of the stats of the report
+    - **report_id**: ID number of the report to be voted on
     """
 
     # check the existence of the report
@@ -202,22 +277,24 @@ async def upvote(
     return updated_report_stat
 
 
-@router.post("/{report_id}/downvote")
+@router.post(
+    "/{report_id}/downvote",
+    summary="Downvote a report",
+    response_description="Summary of report statistics",
+)
 async def downvote(
     report_id: int,
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportStatInDB:
     """
-    Adds or removes the user's downvote for a report.
+    Adds or removes a user's downvote for a report. Downvote followed
+    by a downvote, removes the first downvote. Downvote after an upvote,
+    removes the upvote and adds a downvote.
 
-    ## Parameters:
-    - `report_id`         (int): id number of the report
-    - `db`           (Database): object with database access
-    - `current_user` (UserInDB): request sending user's db record
+    Only signed in users are authorized to use this endpoint.
 
-    ## Returning:
-    `ReportStatInDB`: db record of the stats of the report
+    - **report_id**: ID number of the report to be voted on
     """
 
     # check the existence of the report
