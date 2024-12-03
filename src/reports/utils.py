@@ -2,6 +2,19 @@ from .schemas import ReportInDB, ReportStatInDB, ReportsInDB, VoteInDB
 
 
 def row_to_report(row) -> ReportInDB:
+    """
+    Converts a Tuple containing data of a report into a ReportInDB
+    object.
+
+    Parameters:
+    `row` (Tuple):
+    (`id`, `timestamp`, `user_id`, `title`, `location`, `directions`,
+    `description`)
+
+    Returns:
+    ReportInDB: An object representing the db record of a report
+    """
+
     report = ReportInDB(
         id=row[0],
         timestamp=row[1],
@@ -16,6 +29,17 @@ def row_to_report(row) -> ReportInDB:
 
 
 def rows_to_reports(rows) -> ReportsInDB:
+    """
+    Converts a Tuple containing Tuple(s) with data of a report into a
+    ReportsInDB object.
+
+    Parameters:
+    `row` (Tuple): (report_1, report_2, report_3, ...)
+
+    Returns:
+    ReportsInDB: An object cotaining instance(s) of ReportInDB objects
+    """
+
     reports = []
     for row in rows:
         report = row_to_report(row)
@@ -49,14 +73,14 @@ def row_to_vote(row) -> VoteInDB:
 def row_to_report_stat(row) -> ReportStatInDB:
     """
     Converts a Tuple containing statistics data of a report into a
-    ReportInDB object.
+    ReportStatInDB object.
 
     Parameters:
     `row` (Tuple):
     (`report_id`, `view_count`, `upvote_count`, `downvote_count`)
 
     Returns:
-    ReportInDB: An object representing the db record of report stats
+    ReportStatInDB: An object representing the db record of report stats
     """
 
     report_stat = ReportStatInDB(
