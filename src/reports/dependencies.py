@@ -14,6 +14,22 @@ async def authorize_changes_to_report(
     db: Annotated[Database, Depends(Database)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
 ) -> ReportInDB:
+    """
+    Checks whether the current active user is authorized to make changes
+    to the report to be edited.
+
+    Parameters:
+    `report_id`: id number of the report to be edited
+
+    Dependencies:
+    db           (Database): injects object with database access
+    current_user (UserInDB): authenticates the current active user and
+    injects its db record
+
+    Returns:
+    ReportInDB: current record of the report in `reports` table
+    """
+
     report: ReportInDB = get_report_by_id(report_id, db)
     if current_user.id != report.user_id:
         raise HTTPException(
