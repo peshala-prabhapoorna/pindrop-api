@@ -15,6 +15,17 @@ from .schemas import (
 
 
 def get_report_by_id(report_id: int, db: Database) -> ReportInDB:
+    """
+    Retrieves the record of the report with the given id and returns it.
+
+    Parameters:
+    `report_id` (int): id number of the report
+    `db`   (Database): object with database access
+
+    Returns:
+    ReportInDB: record of the report in `reports` table
+    """
+
     sql = "SELECT * FROM reports WHERE id=%s AND deleted_at IS NULL;"
     values = (report_id,)
     db.cursor.execute(sql, values)
