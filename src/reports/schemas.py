@@ -2,40 +2,86 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-# `reports` table models
 class ReportBase(BaseModel):
+    """
+    `reports` table models are derived from this class.
+
+    Attributes:
+    `title`       (str): a short topic summarising the issue
+    `location`    (str): coordinates of the location of the report
+    `directions`  (str): landmarks/tips to locate the issue
+    `description` (str): a detailed report of the issue
+    """
+
     title: str
     location: str
     directions: str
     description: str
 
 
-# model to get input from the user
 class ReportIn(ReportBase):
+    """
+    Model used to get input from the user to create a report.
+
+    Attributes:
+    `title`       (str): a short topic summarising the issue
+    `location`    (str): coordinates of the location of the report
+    `directions`  (str): landmarks/tips to locate the issue
+    `description` (str): a detailed report of the issue
+    """
+
     pass
 
 
-# model to use in responses
 class ReportInDB(ReportBase):
+    """
+    Model representing the db record of a report.
+
+    Attributes:
+    `title`          (str): a short topic summarising the issue
+    `location`       (str): coordinates of the location of the report
+    `directions`     (str): landmarks/tips to locate the issue
+    `description`    (str): a detailed report of the issue
+    `id`             (int): unique id number of the report
+    `timestamp` (datetime): timestamp of when the report was created
+    `user_id`        (int): id of the user who created the report
+    """
+
     id: int
     timestamp: datetime
     user_id: int
 
 
-# model to get input for report updates/edits
 class ReportEdit(BaseModel):
+    """
+    Model used to get input from the user to edit a report.
+
+    Attributes:
+    `title`       (str | None = None): a short topic summarising the
+    issue
+    `location`    (str | None = None): coordinates of the location of
+    the report
+    `directions`  (str | None = None): landmarks/tips to locate the
+    issue
+    `description` (str | None = None): a detailed report of the issue
+    """
+
     title: str | None = None
     location: str | None = None
     directions: str | None = None
     description: str | None = None
 
 
-# model to use in reponses that sends multiple reports
 class ReportsInDB(BaseModel):
+    """
+    Model to use in responses that send multiple reports.
+
+    Attributes:
+    `reports` (list[ReportInDB]): a list of ReportInDB objects
+    """
     reports: list[ReportInDB]
 
 
-# `votes` table models
 class VoteBase(BaseModel):
     """
     `votes` table models are derived from this class.
@@ -80,7 +126,6 @@ class VoteEdit(VoteBase):
     pass
 
 
-# `report_stats` table models
 class ReportStatBase(BaseModel):
     """
     `reports` table models are derived from this class.
