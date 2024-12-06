@@ -79,6 +79,7 @@ class ReportsInDB(BaseModel):
     Attributes:
     `reports` (list[ReportInDB]): a list of ReportInDB objects
     """
+
     reports: list[ReportInDB]
 
 

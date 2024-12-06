@@ -103,7 +103,9 @@ def get_report_by_id(report_id: int, db: Database) -> ReportInDB:
 
 
 def get_previous_vote(
-    report_id: int, user_id: int, db: Database
+    report_id: int,
+    user_id: int,
+    db: Database,
 ) -> VoteInDB | None:
     """
     Retrieves the record of the last vote casted by the user on the

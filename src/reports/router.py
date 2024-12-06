@@ -87,7 +87,8 @@ async def get_all_reports(
     response_description="Requested report",
 )
 async def get_one_report(
-    report_id: int, db: Annotated[Database, Depends(Database)]
+    report_id: int,
+    db: Annotated[Database, Depends(Database)],
 ) -> ReportInDB:
     """
     Fetch the requested report.
