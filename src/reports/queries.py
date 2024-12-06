@@ -4,14 +4,75 @@ from fastapi import status
 from fastapi.exceptions import HTTPException
 
 from src.dependencies import Database
+from src.users.schemas import UserInDB
+from src.utils import utc_now
 from .utils import row_to_report, row_to_report_stat, row_to_vote
 from .schemas import (
+    ReportIn,
     ReportInDB,
     ReportStatEdit,
     ReportStatInDB,
     VoteEdit,
     VoteInDB,
 )
+
+
+def create_new_report(
+    report: ReportIn,
+    current_user: UserInDB,
+    db: Database,
+) -> ReportInDB:
+    """
+    Create a new record in the `reports` table of the database.
+
+    Parameters:
+    `report`       (ReportIn): user input for the data of the report
+    `current_user` (UserInDB): user who is requesting to create a report
+    `db`           (Database): an object with database access
+
+    Returns:
+    ReportInDB: db record of the newly created report
+    """
+
+    sql = (
+        "INSERT INTO reports(timestamp, user_id, title, location, "
+        "directions, description)"
+        "VALUES(%s, %s, %s, %s, %s, %s)"
+        "RETURNING *;"
+    )
+    values = (
+        utc_now(),
+        current_user.id,
+        report.title,
+        report.location,
+        report.directions,
+        report.description,
+    )
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
+
+    new_report: ReportInDB = row_to_report(row)
+    return new_report
+
+
+def create_new_report_stats_record(report_id: int, db: Database) -> None:
+    """
+    Create a new record in the `report_stats` table of the database.
+    A new `report_stats` record should be created when a new report is
+    created.
+
+    Parameters:
+    `report_id` (int): id number of the newly created report
+    `db`   (Database): object with database access
+
+    Returns:
+    None
+    """
+
+    sql = "INSERT INTO report_stats(report_id) VALUES (%s);"
+    values = (report_id,)
+    db.cursor.execute(sql, values)
+    db.connection.commit()
 
 
 def get_report_by_id(report_id: int, db: Database) -> ReportInDB:

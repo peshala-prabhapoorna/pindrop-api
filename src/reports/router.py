@@ -19,6 +19,8 @@ from .schemas import (
 from .dependencies import authorize_changes_to_report
 from .utils import row_to_report, rows_to_reports
 from .queries import (
+    create_new_report,
+    create_new_report_stats_record,
     get_previous_vote,
     get_report_by_id,
     get_report_stats,
@@ -50,32 +52,8 @@ async def create_report(
     - **description**: A detailed report of the issue.
     """
 
-    # create report
-    sql = (
-        "INSERT INTO reports(timestamp, user_id, title, location, "
-        "directions, description)"
-        "VALUES(%s, %s, %s, %s, %s, %s)"
-        "RETURNING *;"
-    )
-    values = (
-        utc_now(),
-        current_user.id,
-        report.title,
-        report.location,
-        report.directions,
-        report.description,
-    )
-    db.cursor.execute(sql, values)
-    row = db.cursor.fetchone()
-
-    new_report: ReportInDB = row_to_report(row)
-
-    # report_stats record
-    sql = "INSERT INTO report_stats(report_id) VALUES (%s);"
-    values = (new_report.id,)
-    db.cursor.execute(sql, values)
-    db.connection.commit()
-
+    new_report: ReportInDB = create_new_report(report, current_user, db)
+    create_new_report_stats_record(new_report.id, db)
     return new_report
 
 
