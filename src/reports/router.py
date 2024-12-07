@@ -25,6 +25,7 @@ from .queries import (
     get_report_by_id,
     get_report_stats,
     record_vote,
+    soft_delete_report_by_id,
     update_report_stats,
 )
 
@@ -120,24 +121,12 @@ async def delete_report(
     - **report_id**: ID number of the report to be deleted
     """
 
-    sql = (
-        "UPDATE reports "
-        "SET deleted_at = %s "
-        "WHERE id = %s AND deleted_at IS NULL "
-        "RETURNING title, deleted_at;"
-    )
-    values = (utc_now(), report.id)
-    db.cursor.execute(sql, values)
-    row: Tuple | None = db.cursor.fetchone()
-    db.connection.commit()
-
-    if row is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="failed to delete report",
-        )
-
-    return {"message": "report deleted", "title": row[0], "deleted_at": row[1]}
+    (title, deleted_at) = soft_delete_report_by_id(report.id, db)
+    return {
+        "message": "report deleted",
+        "title": title,
+        "deleted_at": deleted_at,
+    }
 
 
 @router.patch(

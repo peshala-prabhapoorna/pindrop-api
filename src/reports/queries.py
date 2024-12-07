@@ -102,6 +102,38 @@ def get_report_by_id(report_id: int, db: Database) -> ReportInDB:
     return report
 
 
+def soft_delete_report_by_id(report_id: int, db: Database) -> Tuple:
+    """
+    Soft deletes the record of the report with the given id.
+
+    Parameters:
+    `report_id` (int): id number of the report
+    `db`   (Database): object with database access
+
+    Returns:
+    Tuple (title, timestamp): A tuple with the title of the report and
+    the time of deletion
+    """
+
+    sql = (
+        "UPDATE reports "
+        "SET deleted_at = %s "
+        "WHERE id = %s AND deleted_at IS NULL "
+        "RETURNING title, deleted_at;"
+    )
+    values = (utc_now(), report_id)
+    db.cursor.execute(sql, values)
+    row: Tuple | None = db.cursor.fetchone()
+    db.connection.commit()
+
+    if row is None:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="failed to delete report",
+        )
+    return row
+
+
 def get_previous_vote(
     report_id: int,
     user_id: int,
