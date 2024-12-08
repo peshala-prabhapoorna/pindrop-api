@@ -8,6 +8,7 @@ from src.users.schemas import UserInDB
 from src.utils import utc_now
 from .utils import row_to_report, row_to_report_stat, row_to_vote
 from .schemas import (
+    ReportEdit,
     ReportIn,
     ReportInDB,
     ReportStatEdit,
@@ -132,6 +133,46 @@ def soft_delete_report_by_id(report_id: int, db: Database) -> Tuple:
             detail="failed to delete report",
         )
     return row
+
+
+def edit_report_by_id(
+    report_id: int,
+    updated_report: ReportEdit,
+    db: Database,
+) -> ReportInDB:
+    """
+    Edits the record of the report with the given id with the provided
+    data.
+
+    Parameters:
+    `report_id`             (int): id number of the report
+    `updated_report` (ReportEdit): the values in this report will be
+    entered to the database
+    `db`               (Database): object with database access
+
+    Returns:
+    ReportInDB: record of the updated report in the `reports` table
+    """
+
+    sql = (
+        "UPDATE reports "
+        "SET title = %s, location = %s, directions = %s, description = %s "
+        "WHERE id = %s "
+        "RETURNING *;"
+    )
+    values = (
+        updated_report.title,
+        updated_report.location,
+        updated_report.directions,
+        updated_report.description,
+        report_id,
+    )
+    db.cursor.execute(sql, values)
+    row = db.cursor.fetchone()
+    db.connection.commit()
+
+    response_report: ReportInDB = row_to_report(row)
+    return response_report
 
 
 def get_previous_vote(

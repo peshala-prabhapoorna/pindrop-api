@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, Tuple
+from typing import Annotated, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -21,6 +21,7 @@ from .utils import row_to_report, rows_to_reports
 from .queries import (
     create_new_report,
     create_new_report_stats_record,
+    edit_report_by_id,
     get_previous_vote,
     get_report_by_id,
     get_report_stats,
@@ -135,7 +136,7 @@ async def delete_report(
     response_description="Updated report",
 )
 async def edit_report(
-    report_update: ReportEdit,
+    update_request: ReportEdit,
     db: Annotated[Database, Depends(Database)],
     report: Annotated[ReportInDB, Depends(authorize_changes_to_report)],
 ) -> ReportInDB:
@@ -154,40 +155,29 @@ async def edit_report(
     - **description**: A detailed report of the issue.
     """
 
-    update_data = report_update.model_dump(exclude_unset=True)
+    # extract the fields updated by the user from the request
+    update_data = update_request.model_dump(exclude_unset=True)
     if update_data == {}:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="no new values to update",
         )
 
-    report_in_db_model = ReportEdit(
+    current_report = ReportEdit(
         title=report.title,
         location=report.location,
         directions=report.directions,
         description=report.description,
     )
 
-    updated_report_model = report_in_db_model.model_copy(update=update_data)
-    update_sql = (
-        "UPDATE reports "
-        "SET title = %s, location = %s, directions = %s, description = %s "
-        "WHERE id = %s "
-        "RETURNING *;"
-    )
-    update_values = (
-        updated_report_model.title,
-        updated_report_model.location,
-        updated_report_model.directions,
-        updated_report_model.description,
+    # edit the fields that have been updated in the current report
+    updated_report: ReportEdit = current_report.model_copy(update=update_data)
+
+    response_report: ReportInDB = edit_report_by_id(
         report.id,
+        updated_report,
+        db,
     )
-    db.cursor.execute(update_sql, update_values)
-    updated_row = db.cursor.fetchone()
-    db.connection.commit()
-
-    response_report: ReportInDB = row_to_report(updated_row)
-
     return response_report
 
 
