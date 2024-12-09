@@ -1,4 +1,4 @@
-from .schemas import ReportInDB, ReportStatInDB, ReportsInDB, VoteInDB
+from .schemas import ReportEdit, ReportInDB, ReportStatInDB, ReportsInDB, VoteInDB
 
 
 def row_to_report(row) -> ReportInDB:
@@ -46,6 +46,26 @@ def rows_to_reports(rows) -> ReportsInDB:
         reports.append(report)
 
     return ReportsInDB(reports=reports)
+
+
+def report_to_report_edit(report: ReportInDB) -> ReportEdit:
+    """
+    Creates a ReportEdit model from the given ReportInDB.
+
+    Parameters:
+    `report` (ReportInDB): db record of a record
+
+    Returns:
+    ReportEdit: Model created using the given report
+    """
+
+    report_edit = ReportEdit(
+        title=report.title,
+        location=report.location,
+        directions=report.directions,
+        description=report.description,
+    )
+    return report_edit
 
 
 def row_to_vote(row) -> VoteInDB:

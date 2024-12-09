@@ -17,7 +17,7 @@ from .schemas import (
     VoteInDB,
 )
 from .dependencies import authorize_changes_to_report
-from .utils import row_to_report, rows_to_reports
+from .utils import report_to_report_edit, rows_to_reports
 from .queries import (
     create_new_report,
     create_new_report_stats_record,
@@ -163,12 +163,8 @@ async def edit_report(
             detail="no new values to update",
         )
 
-    current_report = ReportEdit(
-        title=report.title,
-        location=report.location,
-        directions=report.directions,
-        description=report.description,
-    )
+    # create ReportEdit model of the current report
+    current_report: ReportEdit = report_to_report_edit(report)
 
     # edit the fields that have been updated in the current report
     updated_report: ReportEdit = current_report.model_copy(update=update_data)
