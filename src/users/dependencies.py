@@ -10,6 +10,13 @@ from .utils import get_user_by_email
 
 
 async def get_jwt_env_vars():
+    """
+    Import environment variables related to JWT authentication.
+
+    Returns:
+    Dict: A dictionary with data related to JWT authentication
+    """
+
     JWT_SECRET = getenv("JWT_SECRET")
     JWT_ALGORITHM = getenv("JWT_ALGORITHM")
     JWT_TOKEN_EXPIRE_MINS = getenv("JWT_TOKEN_EXPIRE_MINS")
@@ -22,12 +29,24 @@ async def get_jwt_env_vars():
     return dict
 
 
-# checks the validity of the token
 async def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
     db: Annotated[Database, Depends(Database)],
 ) -> UserInDB:
+    """
+    Checks the validity of the token in the request header and
+    authenticates the user.
+
+    Dependencies:
+    `token`    (str): JWT token sent in the request header
+    `jwt_env` (dict): environment variables related to jwt
+    `db`  (Database): object with database access
+
+    Returns:
+    UserInDB: Db record of the authenticated user in the `users` table
+    """
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -50,12 +69,25 @@ async def get_current_user(
     return user
 
 
-# checks if the token is an active token
-# active tokens are stored in the 'tokens' column of 'users' table
 async def get_current_active_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     current_user: Annotated[UserInDB, Depends(get_current_user)],
 ) -> UserInDB:
+    """
+    Authenticates the user and checks if the token in the request header
+    is an active token.
+
+    Active tokens are stored in the `tokens` column of `users` table.
+
+    Dependencies:
+    `token`             (str): JWT token sent in the request header
+    `current_user` (UserInDB): User record returned after authenticating
+    the JWT token
+
+    Returns:
+    UserInDB: Db record of the authenticated user in the `users` table
+    """
+
     if token not in current_user.tokens:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
