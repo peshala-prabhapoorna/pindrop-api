@@ -85,9 +85,24 @@ class UserNameEdit(BaseModel):
 
 
 class Token(BaseModel):
+    """
+    Model used to return the generated JWT to the client.
+
+    Attributes:
+    `access_token` (str): newly generated JWT
+    `token_type`   (str): the type of the issued token
+    """
+
     access_token: str
     token_type: str
 
 
 class TokenData(BaseModel):
+    """
+    Model used to store JWT payload data.
+
+    Attributes:
+    `email` (str): email in the payload of the JWT
+    """
+
     email: str | None = None
