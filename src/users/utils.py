@@ -2,14 +2,14 @@ import bcrypt
 from datetime import timedelta
 import jwt
 from jwt.exceptions import ExpiredSignatureError
-from typing import List
+from typing import List, Tuple
 
 from src.utils import utc_now
 from src.dependencies import Database
 from .schemas import UserInDB, UserOut
 
 
-def row_to_user_in_db(row) -> UserInDB:
+def row_to_user_in_db(row: Tuple) -> UserInDB:
     user = UserInDB(
         id=row[0],
         first_name=row[1],
@@ -21,7 +21,7 @@ def row_to_user_in_db(row) -> UserInDB:
     return user
 
 
-def row_to_user_out(row) -> UserOut:
+def row_to_user_out(row: Tuple) -> UserOut:
     user_out = UserOut(
         id=row[0],
         first_name=row[1],
@@ -35,7 +35,7 @@ def row_to_user_out(row) -> UserOut:
 def get_user_by_email(
     email: str,
     db: Database,
-) -> UserInDB:
+) -> UserInDB | None:
     sql = (
         "SELECT id, first_name, last_name, phone_num, email, tokens "
         "FROM users "
@@ -43,7 +43,7 @@ def get_user_by_email(
     )
     values = (email,)
     db.cursor.execute(sql, values)
-    row = db.cursor.fetchone()
+    row: Tuple | None = db.cursor.fetchone()
 
     if row is None:
         return None
@@ -55,7 +55,7 @@ def authenticate_user(
     email: str,
     password: str,
     db: Database,
-) -> UserInDB:
+) -> UserInDB | bool:
     sql = (
         "SELECT "
         "id, first_name, last_name, phone_num, email, tokens, hashed_password "
@@ -64,7 +64,7 @@ def authenticate_user(
     )
     values = (email,)
     db.cursor.execute(sql, values)
-    row = db.cursor.fetchone()
+    row: Tuple | None = db.cursor.fetchone()
 
     if row is None:
         return False
@@ -79,23 +79,23 @@ def authenticate_user(
     return row_to_user_in_db(row[:6])
 
 
-def create_access_token(data: dict, jwt_args: dict):
+def create_access_token(data: dict, jwt_args: dict) -> str:
     to_encode = data.copy()
     expire = utc_now() + timedelta(minutes=int(jwt_args["timedelta"]))
     to_encode.update({"exp": expire})
 
-    encoded_jwt = jwt.encode(
+    encoded_jwt: str = jwt.encode(
         to_encode, jwt_args["secret"], algorithm=jwt_args["algorithm"]
     )
     return encoded_jwt
 
 
 def remove_expired_tokens(
-    tokens: List[str],
+    tokens: List[str] | None,
     jwt_args: dict,
-) -> List[str]:
+) -> List[str] | None:
     if tokens is None:
-        return tokens
+        return None
 
     tokens_copy = tokens.copy()
     for token in tokens_copy:
