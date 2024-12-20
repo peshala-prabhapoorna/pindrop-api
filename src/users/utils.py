@@ -10,6 +10,17 @@ from .schemas import UserInDB, UserOut
 
 
 def row_to_user_in_db(row: Tuple) -> UserInDB:
+    """
+    Converts a Tuple containing data of a user into a UserInDB object.
+
+    Parameters:
+    `row` (Tuple):
+    (`id`, `first_name`, `last_name`, `phone_num`, `email`, `tokens`)
+
+    Returns:
+    UserInDB: An object representing the db record of a user
+    """
+
     user = UserInDB(
         id=row[0],
         first_name=row[1],
@@ -22,6 +33,17 @@ def row_to_user_in_db(row: Tuple) -> UserInDB:
 
 
 def row_to_user_out(row: Tuple) -> UserOut:
+    """
+    Converts a Tuple containing data of a user into a UserOut object.
+
+    Parameters:
+    `row` (Tuple):
+    (`id`, `first_name`, `last_name`, `phone_num`, `email`)
+
+    Returns:
+    UserOut: An object used to send data of a user to the client
+    """
+
     user_out = UserOut(
         id=row[0],
         first_name=row[1],
