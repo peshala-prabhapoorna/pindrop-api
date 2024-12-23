@@ -8,12 +8,12 @@ from src.utils import utc_now
 from src.dependencies import Database, oauth2_scheme
 from .dependencies import get_current_active_user, get_jwt_env_vars
 from .schemas import UserIn, UserInDB, UserNameEdit, Token
+from .queries import update_jwt_tokens
 from .utils import (
     row_to_user_out,
     authenticate_user,
     create_access_token,
     remove_expired_tokens,
-    update_jwt_tokens,
 )
 
 router = APIRouter(prefix="/api/v0/users", tags=["users"])

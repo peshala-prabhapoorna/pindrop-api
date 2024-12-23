@@ -5,8 +5,8 @@ from os import getenv
 from typing import Annotated
 
 from src.dependencies import Database, oauth2_scheme
+from .queries import get_user_by_email
 from .schemas import TokenData, UserInDB
-from .utils import get_user_by_email
 
 
 async def get_jwt_env_vars():
