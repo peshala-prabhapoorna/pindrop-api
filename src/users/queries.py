@@ -9,6 +9,19 @@ def get_user_by_email(
     email: str,
     db: Database,
 ) -> UserInDB | None:
+    """
+    Retrieves user information from the database with the given email
+    and returns them.
+
+    Attributes:
+    `email`   (str): Email of the requested user
+    `db` (Database): Object with database access
+
+    Returns:
+    UserInDB | None: Returns user info if user exists in database or
+    None otherwise.
+    """
+
     sql = (
         "SELECT id, first_name, last_name, phone_num, email, tokens "
         "FROM users "
@@ -29,6 +42,15 @@ def update_jwt_tokens(
     user_id: int,
     db: Database,
 ) -> None:
+    """
+    Updates the active access tokens in the database.
+
+    Attributes:
+    `tokens` (List[str]): List of active access tokens
+    `user_id`      (int): ID number of the user account
+    `db`      (Database): Object with database access
+    """
+
     sql = (
         "UPDATE users "
         "SET tokens = %s "
