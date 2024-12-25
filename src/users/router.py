@@ -7,7 +7,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from src.utils import utc_now
 from src.dependencies import Database, oauth2_scheme
 from .dependencies import get_current_active_user, get_jwt_env_vars
-from .schemas import UserIn, UserInDB, UserNameEdit, Token
+from .schemas import UserIn, UserInDB, UserNameEdit, Token, UserOut
 from .queries import update_jwt_tokens
 from .utils import (
     row_to_user_out,
@@ -19,11 +19,29 @@ from .utils import (
 router = APIRouter(prefix="/api/v0/users", tags=["users"])
 
 
-@router.post("")
+@router.post(
+    "",
+    summary="Create a user",
+    response_description="Newly created user",
+)
 async def create_user(
     user: UserIn,
     db: Annotated[Database, Depends(Database)],
-):
+) -> UserOut:
+    """
+    Create a new report.
+
+    Phone number and email can only be attached to one account.
+
+    No authorization required.
+
+    - **first_name**: First name of the user
+    - **last_name**: Last name of the user
+    - **phone_num**: Phone number of the user
+    - **email**: Email address of the user
+    - **password**: Password of the user
+    """
+
     sql = (
         "INSERT INTO users (created_at, first_name, last_name, phone_num, "
         "email, hashed_password) "
@@ -53,12 +71,22 @@ async def create_user(
     return row_to_user_out(row)
 
 
-@router.post("/token")
+@router.post(
+    "/token",
+    summary="Login",
+    response_description="Newly created access token",
+)
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     jwt_env: Annotated[dict, Depends(get_jwt_env_vars)],
     db: Annotated[Database, Depends(Database)],
 ) -> Token:
+    """
+    Login by providing username(email) and password.
+
+    No authorization required.
+    """
+
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(
@@ -81,23 +109,45 @@ async def login(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.delete("/token")
+@router.delete(
+    "/token",
+    summary="Logout",
+    response_description="Session termination message",
+)
 async def logout(
     token: Annotated[str, Depends(oauth2_scheme)],
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
     db: Annotated[Database, Depends(Database)],
-):
+) -> dict:
+    """
+    Logout of the session and deactivate access token.
+
+    Only signed in users are authorized to use this endpoint.
+    """
+
     current_user.tokens.remove(token)
     update_jwt_tokens(current_user.tokens, current_user.id, db)
     return {"detail": "Session terminated"}
 
 
-@router.get("/{user_id}")
+@router.get(
+    "/{user_id}",
+    summary="Get user info",
+    response_description="Information of user requested",
+)
 async def get_user(
     user_id: str,
     current_user: Annotated[UserInDB, Depends(get_current_active_user)],
     db: Annotated[Database, Depends(Database)],
-):
+) -> UserOut | dict:
+    """
+    Fetch data of a user.
+
+    Only signed in users are authorized to use this endpoint.
+
+    - **user_id**: ID number of the user being requested
+    """
+
     sql = (
         "SELECT id, first_name, last_name, phone_num, email "
         "FROM users "
@@ -114,12 +164,25 @@ async def get_user(
     return row_to_user_out(row)
 
 
-@router.patch("")
+@router.patch(
+    "",
+    summary="Edit user information",
+    response_description="User information after update",
+)
 async def edit_user_name(
     user_names: UserNameEdit,
     user: Annotated[UserInDB, Depends(get_current_active_user)],
     db: Annotated[Database, Depends(Database)],
-):
+) -> UserOut | dict:
+    """
+    Edit information of the user.
+
+    Only the owner of the account is authorized to use this endpoint.
+
+    - **first_name**: New first name of the user
+    - **last_name**: New last name of the user
+    """
+
     update_data = user_names.model_dump(exclude_unset=True)
     if update_data == {}:
         return {"message": "no new values to update"}
@@ -148,11 +211,21 @@ async def edit_user_name(
     return row_to_user_out(row)
 
 
-@router.delete("")
+@router.delete(
+    "",
+    summary="Delete user account",
+    response_description="status report of user account deletion",
+)
 async def delete_user(
     user: Annotated[UserInDB, Depends(get_current_active_user)],
     db: Annotated[Database, Depends(Database)],
-):
+) -> dict:
+    """
+    Delete user account of the current active user.
+
+    Only the owner of the account is authorized to use this endpoint.
+    """
+
     sql = (
         "UPDATE users "
         "SET tokens = '{}'::TEXT[], deleted_at = %s "
