@@ -59,6 +59,19 @@ def authenticate_user(
     password: str,
     db: Database,
 ) -> UserInDB | bool:
+    """
+    Checks whether the password provided is correct for the user
+    account attached to the email.
+
+    Attributes:
+    `email` (str): Email of a user account
+    `password` (str): Password for the user account
+
+    Returns:
+    UserInDB | bool: Returns user data in case of successful
+    authentication and False otherwise.
+    """
+
     sql = (
         "SELECT "
         "id, first_name, last_name, phone_num, email, tokens, hashed_password "
@@ -83,6 +96,17 @@ def authenticate_user(
 
 
 def create_access_token(data: dict, jwt_args: dict) -> str:
+    """
+    Creates a new access token (JWT).
+
+    Attributes:
+    `data`     (dict): Data to be embedded in the new token
+    `jwt_args` (dict): JWT token related data
+
+    Returns:
+    str: Newly created token
+    """
+
     to_encode = data.copy()
     expire = utc_now() + timedelta(minutes=int(jwt_args["timedelta"]))
     to_encode.update({"exp": expire})
@@ -97,6 +121,17 @@ def remove_expired_tokens(
     tokens: List[str] | None,
     jwt_args: dict,
 ) -> List[str] | None:
+    """
+    Removes expired tokens from the active tokens list.
+
+    Attributes:
+    `tokens` (List[str] | None): List of active access tokens
+    `jwt_args`           (dict): JWT token related data
+
+    Returns:
+    List[str] | None: Updated list without expired tokens
+    """
+
     if tokens is None:
         return None
 
