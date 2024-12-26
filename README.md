@@ -1,5 +1,7 @@
 # Pindrop API
 
+![Pindrop API](https://github.com/user-attachments/assets/d291a103-600c-448f-866d-b521b7c28423)
+
 #### [Video Demo](https://youtu.be/Kf6628NfLTk)
 
 Pindrop API is a not yet powerful (but will soon be :D), location-based issue  
@@ -8,7 +10,6 @@ facilities, factories, or location-dependent services. This API simplifies
 the process of tracking and managing issues across extensive areas, ensuring  
 operational efficiency and improved service delivery.
 
----
 
 ## Key Features
 
@@ -19,14 +20,12 @@ creation, editing details, fetching user information, and account deletion.
 - Authentication and Authorization: Secure access to protected endpoints with  
 user authentication.
 
----
 
 ## Technology Stack
 
 - Framework: FastAPI
 - Language: Python (3.12.3)
 
----
 
 ## Endpoints Overview
 
@@ -86,7 +85,6 @@ handling. Here's a detailed overview of the available endpoints:
    - **Authorization:** Required.
    - **Path Parameter:** `report_id` (Integer).
 
----
 
 ### User Management
 
@@ -131,7 +129,6 @@ These endpoints, coupled with secure authentication via
 flexibility and scalability for handling complex location-based issue tracking  
 scenarios.
 
----
 
 ## Get started: for devs
 
@@ -207,14 +204,12 @@ be accessed and tested directly.
 
 Happy coding!
 
----
 
 ## Future Plans
 
 - Enhancing feature richness.
 - Developing a user-friendly UI for easier interaction.
 
----
 
 ## Author
 
